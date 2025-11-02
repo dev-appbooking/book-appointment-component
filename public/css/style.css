@@ -64,15 +64,19 @@
 
 .appBookingStepSummaryContainer {
     display: flex;
+    flex-direction: column;
+    margin-top: 8px;
     width: 100%;
 }
 
 .appBookingStepTitle {
     flex-grow: 1;
+    width: 100%;
 }
 
 .appBookingStepContent {
     flex-grow: 1;
+    width: 100%;
 }
 
 .appBookingStepEditBtn {
@@ -138,6 +142,10 @@
     display:flex;
     flex-wrap: wrap;
 }
+.appBookingDateLine {
+    margin-bottom: 8px;
+}
+
 .appBookingTimeSlotButton {
     padding: 8px;
     width: 80px;
@@ -160,6 +168,75 @@
 .appBookingTimeSlotSelectedButton {
     background-color: #00695f;
     color: #FFFFFF;
+}
+
+.appBookingFacetGroup {
+    background-color: #fff;
+    box-shadow: 0 0 0 1px #c9cbcf;
+    margin-bottom: 8px;
+    padding: 8px;
+    font-size: 0.85em;
+}
+
+.appBookingFormFieldSet {
+    border-width: 0px;
+    padding: 0px 0px 8px 0px;
+}
+
+.appBookingFormInputLabel {
+   color: #99a1af;
+   font-size: 0.85em;
+}
+
+.appBookingFormInputText {
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #fff;
+    border-width: 1px;
+    border-color: #99a1af;
+    width: 100%;
+    display: block;
+    line-height: 1.6em;
+    border-style: solid;
+    font-size: 1em;
+}
+.appBookingFormErrorText {
+    color: red;
+    font-size: 0.85em;
+}
+.appBookingFormInputCheckbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.8em;
+}
+
+.appBookingFormFieldSetLine {
+    align-items: center;
+    display: flex;
+}
+
+.appBookingCtaContainer {
+    margin: 16px 0;
+}
+.appBookingCtaButton {
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: #99a1af;
+    border-width: 1px;
+    border-color: #99a1af;
+    width: 100%;
+    border-style: solid;
+    font-size: 1em;
+}
+
+.appBookingCtaButton:not([disabled]), .appBookingCtaButton:hover:not([disabled])
+ {
+    background-color: #00695f;
+    color: #fff;
+}
+
+.appBookingAttributesLine {
+    margin-bottom: 4px;
 }
 
 /* Extra small devices (phones, 600px and down) */
@@ -186,12 +263,19 @@
     .appBookingStepContent {
         width: 60%;
     }
+    .appBookingStepSummaryContainer {
+        margin-top: 0;
+        flex-direction: row;
+    }
 }
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
     .bookingContainer {
     width: 800px;
+    }
+    .appBookingCtaButton {
+        width: auto;
     }
 }
 

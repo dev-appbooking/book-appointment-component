@@ -38,8 +38,8 @@ function getTermsCheckboxLabelContent() {
 return (
     <div>
             <fieldset className="appBookingFormFieldSet">
-                <label htmlFor="nume" className="appBookingFormInputLabel"> { ltext.text('customer.name') } </label>
-                <div className="">
+                <label htmlFor="name" className="appBookingFormInputLabel"> { ltext.text('customer.name') } </label>
+                <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.name} name="name" onChange={ (e) => { onChange('name', e)}} 
                             onBlur={ (e) => { onBlur('name', e)}}
@@ -50,7 +50,7 @@ return (
 
             <fieldset className="appBookingFormFieldSet">
                 <label htmlFor="mobile" className="appBookingFormInputLabel"> { ltext.text('customer.mobile') } </label>
-                <div className="">
+                <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.mobile} name="mobile" onChange={ (e) => { onChange('mobile', e)}}
                             onBlur={ (e) => { onBlur('mobile', e)}}
@@ -61,7 +61,7 @@ return (
 
             <fieldset className="appBookingFormFieldSet">
                 <label htmlFor="email" className="appBookingFormInputLabel"> { ltext.text('customer.email') } </label>
-                <div className="">
+                <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.email} name="email" onChange={ (e) => { onChange('email', e)}}
                             onBlur={ (e) => { onBlur('email', e)}}
@@ -75,9 +75,9 @@ return (
                         onChange={ (e) => { onChange('acceptTerms', e)}}
                         onBlur={ (e) => { onBlur('acceptTerms', e)}}
                     /> 
-                    <div class="appBookingFormTermsLabel">
+                    <label class="appBookingFormTermsLabel" htmlFor="acceptTerms">
                     { getTermsCheckboxLabelContent() } 
-                    </div>
+                    </label>
                 </div>
                 { getFieldErrorContent('acceptTerms') }
             </fieldset>

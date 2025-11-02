@@ -12,7 +12,7 @@ function getCheckedValue(filterGroupId, filterItemId) {
 }
 
 return (
-    <div className="w-full">
+    <>
         { props.filterData.filterItems.map ( filterGroupItem => {
             if (filterGroupItem.values.length < 2) {
                 // do not show filter if there are less than 2 possible options
@@ -32,5 +32,5 @@ return (
         })
         }
             
-    </div>)
+    </>)
 }

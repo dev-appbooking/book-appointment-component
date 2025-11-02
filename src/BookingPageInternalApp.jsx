@@ -454,17 +454,13 @@ export function BookingPageInternalApp (props) {
             return ( 
             <div>
                 <div className="appBookingActiveStepTitle"> { ltext.text('step.service', stepIndex + 1) } </div>
-                <div className="">
-                    { (hasFilters) && <div className="flex grow mb-4">
-                        <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/>
-                    </div>}
-                        <CustomList 
-                            items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService} 
-                            selectedIndex={bookingData.step_choose_service.serviceIndex} 
-                            expand={true} 
-                            itemContent={serviceItemContent} 
-                            ltext={ltext} />
-                </div>
+                    { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
+                    <CustomList 
+                        items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService} 
+                        selectedIndex={bookingData.step_choose_service.serviceIndex} 
+                        expand={true} 
+                        itemContent={serviceItemContent} 
+                        ltext={ltext} />
             </div>
             )
         } else if ((bookingData.step !== 'step_choose_service') && selectedService) {
@@ -499,7 +495,8 @@ export function BookingPageInternalApp (props) {
             let dateStr = format(startDate, "dd-LL-yyyy HH:mm");
             let title = ltext.textValue(getRawTextByKey('step.slot.done'), stepIndex + 1);
             return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}> 
-                        <div className="inline-block align-middle">{ dateStr } </div>
+                        <div className="appBookingAttributesLine">  11 Noiembrie (Marți) - 09:45</div>
+                        <div className="appBookingAttributesLine"> { dateStr } </div>
                     </StepSummary>)
         } else {
             return (
@@ -518,8 +515,7 @@ export function BookingPageInternalApp (props) {
     function contentForStep_personalData(stepIndex) {
         if (bookingData.step === 'step_personal_data') {
             return ( 
-                <div className="">
-                    <div>
+                <div>
                         <div className="appBookingActiveStepTitle"> 
                             { ltext.text('step.personalInfo', stepIndex + 1) } 
                         </div>
@@ -528,7 +524,6 @@ export function BookingPageInternalApp (props) {
                                                             rawTextByKey={getRawTextByKey}
                                                             configs={props.configs}
                                                             />
-                    </div>
         
                     <div className="appBookingCtaContainer">
                         <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
@@ -538,11 +533,11 @@ export function BookingPageInternalApp (props) {
         } else if ((bookingData.step_personal_data.name.length > 0) && (bookingData.step_personal_data.mobile.length > 0) && (bookingData.step_personal_data.email.length > 0) && bookingData.step_personal_data.acceptTerms) {
             let title = ltext.text('step.personalInfo.done', stepIndex + 1);
             return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
-                        <div className="inline-block align-middle">
-                            <div> {ltext.text('customer.name')} {bookingData.step_personal_data.name} </div> 
-                            <div> {ltext.text('customer.mobile')} {bookingData.step_personal_data.mobile} </div> 
-                            <div> {ltext.text('customer.email')} {bookingData.step_personal_data.email} </div>
-                        </div>
+                        <>
+                            <div className="appBookingAttributesLine"> {ltext.text('customer.name')} {bookingData.step_personal_data.name} </div> 
+                            <div className="appBookingAttributesLine"> {ltext.text('customer.mobile')} {bookingData.step_personal_data.mobile} </div> 
+                            <div className="appBookingAttributesLine"> {ltext.text('customer.email')} {bookingData.step_personal_data.email} </div>
+                        </>
                     </StepSummary>)
         } else {
             return (
@@ -562,28 +557,24 @@ export function BookingPageInternalApp (props) {
             if ( ['error', 'success'].includes(bookingStatus.status)) {
                 let title = ltext.text('step.confirmation', stepIndex + 1);
                 return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
-                            <div>
-                                { (bookingStatus.status === 'error') &&  (<div className="text-red">
+                                { (bookingStatus.status === 'error') &&  (<div className="">
                                                                              { ltext.text('booking.error') }
                                                                         </div>)
                                 }
-                                { (bookingStatus.status === 'success') &&  (<div className="">
-                                                        <div className="text-green">
+                                { (bookingStatus.status === 'success') &&  (<>
+                                                        <div className="appBookingAttributesLine">
                                                             { ltext.text('booking.success') }
                                                         </div>
-                                                        <div className="text-green">
+                                                        <div className="appBookingAttributesLine">
                                                             { ltext.text('booking.ref') } <span className="text-xl"> {bookingData.step_confirmation.bookingConfirmationId} </span>
                                                         </div>
-                                                    </div>)
+                                                    </>)
                                 }
-                            </div>
                         </StepSummary>)
             }
         } else {
             return (
-                <div className=""> 
-                    <div className="appBookingStepTitle"> { ltext.text('step.confirmation', stepIndex + 1) } </div>
-                </div> 
+                <div className="appBookingStepTitle"> { ltext.text('step.confirmation', stepIndex + 1) } </div> 
             )
         }
     }

@@ -5,6 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>appBooking test book-appointment-component </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.0/umd/react.production.min.js"></script>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.0/umd/react-dom.production.min.js"></script>
@@ -12,6 +14,13 @@
   <script src="/js/appBookingPublic.js"> </script>
 
   <style>
+        body {
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+        }
         h1 {
             font-size: 2em;
         }
@@ -91,7 +100,7 @@
 </style>
 </head>
 
-<body class="">
+<body>
 
     <h1> appBooking - book-appointment-component</h1>
     <div id="booking" class="bookingContainer">
@@ -101,7 +110,7 @@
 <script>
 $(document).ready( function() {    
     const initConfigs = { 
-                        integrationId: 2001,
+                        integrationId: '',
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         configs: {
                                     text: {

@@ -53,7 +53,7 @@ let PublicNextAppSlot = function(props) {
                     let isThisDaySelected = props.selectedBookingSlot && (daySlots[0].day === props.selectedBookingSlot.day);
                     let foundSelection = false;
                     return (
-                        <div key={daySlots[0].day} className="">
+                        <div key={daySlots[0].day}>
                             <div>
                                 {daySlots[0].day}
                             </div>
