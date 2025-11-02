@@ -1,0 +1,203 @@
+.appBookingWidget {
+    display: block;
+}
+
+.appBookingContainer {
+    padding: 16px;
+    border: 1px solid #99a1af;
+    border-radius: 4px;
+    background-color: #fbf9fa;
+    box-shadow: 0 0 10px 2px rgb(0 0 0 / 20%);
+}
+
+.appBookingWidget .appBookingTitle {
+    font-size: 2em;
+    margin: 8px 0;
+}
+
+.appBookingHorizontalBar {
+    border: 1px solid #99a1af;
+    border-top-width: 0;
+}
+
+.appBookingStepContainer {
+    margin: 16px 0;
+}
+
+.appBookingActiveStepTitle {
+    padding-bottom: 8px;
+    line-height: 1.5em;
+}
+
+.appBookingList {
+    width: 100%;
+    display: grid;
+    gap: 8px;
+}
+
+.appBookingListItem {
+    width: 100%;
+    transition: box-shadow .2s linear;
+    background-color: #fff;
+    box-shadow: 0 0 0 1px #c9cbcf;
+}
+
+.appBookingListItemContent {
+    display:flex;
+    padding: 16px;
+}
+
+.appBookingContentGrow {
+    flex-grow: 1;
+}
+
+.appBookingSelectedItemIcon {
+    flex: none;
+    color: #00695f;
+    width: 24px;
+    height: 24px;
+}
+
+.appBookingStepSummary {
+    display:flex;
+}
+
+.appBookingStepSummaryContainer {
+    display: flex;
+    width: 100%;
+}
+
+.appBookingStepTitle {
+    flex-grow: 1;
+}
+
+.appBookingStepContent {
+    flex-grow: 1;
+}
+
+.appBookingStepEditBtn {
+    color: #51a2ff;
+    cursor:pointer;
+    background-color: rgba(0,0,0,0);
+    border-width: 0px;
+}
+.appBookingStepEditBtn:hover {
+    color: #155dfc;
+}
+
+.appBookingStepEditIcon {
+    width: 32px;
+    height: 32px;
+}
+
+.appBookingHidden {
+    display: none;
+}
+
+.appBookingServiceContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.appBookingChooseDateContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.appBookingServiceHeader {
+    display: flex;
+}
+
+.appBokingServiceLineItem {
+    display: flex;
+    flex-direction: row;
+    padding-bottom: 4px;
+}
+
+.appBokingServiceLineItem:last-child {
+    padding-bottom: 0px;
+}
+
+.appBookingServiceAttr {
+    display: flex;
+    flex: none;
+}
+
+.appBookingServiceAttrIcon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+}
+.appBookingServiceAttrContent {
+    padding: 0px 8px 0px 4px;
+}
+
+.appBookingTimeContainer {
+    display:flex;
+    flex-wrap: wrap;
+}
+.appBookingTimeSlotButton {
+    padding: 8px;
+    width: 80px;
+    cursor: pointer;
+    border-width: 2px;
+    border-color: #00695f;
+    margin-right: 16px;
+    margin-bottom: 16px;
+    background-color: #fff;
+    border-radius: 4px;
+    font-size: 1em;
+    border-style: solid;
+}
+
+.appBookingTimeSlotButton:hover {
+    color: #FFFFFF;
+    background-color: #00695f;
+}
+
+.appBookingTimeSlotSelectedButton {
+    background-color: #00695f;
+    color: #FFFFFF;
+}
+
+/* Extra small devices (phones, 600px and down) */
+@media only screen and (max-width: 600px) {
+    .bookingContainer {
+    margin: 24px 8px;
+    width: 100%;
+    }
+}
+
+/* Small devices (portrait tablets and large phones, 600px and up) */
+@media only screen and (min-width: 600px) {
+
+}
+
+/* Medium devices (landscape tablets, 768px and up) */
+@media only screen and (min-width: 768px) {
+    .appBookingList {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .appBookingStepTitle {
+        width: 40%;
+    }
+    .appBookingStepContent {
+        width: 60%;
+    }
+}
+
+/* Large devices (laptops/desktops, 992px and up) */
+@media only screen and (min-width: 992px) {
+    .bookingContainer {
+    width: 800px;
+    }
+}
+
+/* Extra large devices (large laptops and desktops, 1200px and up) */
+@media only screen and (min-width: 1200px) {
+    .bookingContainer {
+        width: 900px;
+    }
+}
