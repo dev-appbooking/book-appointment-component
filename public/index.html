@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>appBooking test book-appointment-component </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.0/umd/react-dom.production.min.js"></script>
+    <link rel="preload" as="style" href="/css/style.css" /><link rel="stylesheet" href="/css/style.css" />
+  <script src="/js/appBookingPublic.js"> </script>
+
+  <style>
+        body {
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+        }
+        h1 {
+            font-size: 2em;
+        }
+
+        .bookingContainer {
+            margin: 24px auto;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        /* Extra small devices (phones, 600px and down) */
+        @media only screen and (max-width: 600px) {
+            .bookingContainer {
+            margin: 24px 8px;
+            width: 100%;
+            }
+        }
+
+        /* Small devices (portrait tablets and large phones, 600px and up) */
+        @media only screen and (min-width: 600px) {
+
+        }
+
+        /* Medium devices (landscape tablets, 768px and up) */
+        @media only screen and (min-width: 768px) {
+        
+        }
+
+        /* Large devices (laptops/desktops, 992px and up) */
+        @media only screen and (min-width: 992px) {
+            .bookingContainer {
+            width: 800px;
+            }
+        }
+
+        /* Extra large devices (large laptops and desktops, 1200px and up) */
+        @media only screen and (min-width: 1200px) {
+            .bookingContainer {
+                width: 900px;
+            }
+        }
+
+        .appBookingContainer {
+            
+        }
+        .appBookingHorizontalBar {
+            
+        }
+        .appBookingActiveStepTitle {
+            
+        }
+        .appBookingStepTitle {
+            
+        }
+        .appBookingStepEditIcon {
+            
+        }
+        .appBookingTimeSlotButton {
+            
+        }
+        .appBookingTimeSlotButton:hover {
+            
+        }
+        .appBookingActiveTimeSlotButton {
+            
+        }
+
+        .appBookingBookButton:hover {
+            
+        }
+        .appBookingListItem {
+            
+        }
+        .appBookingActiveListItem {
+            
+        }
+</style>
+</head>
+
+<body>
+
+    <h1> appBooking - book-appointment-component</h1>
+    <div id="booking" class="bookingContainer">
+
+    </div>
+</body>
+<script>
+$(document).ready( function() {    
+    const initConfigs = { 
+                        integrationId: '',
+                        appBookingApiBaseUrl: "https://www.appBooking.ro",
+                        configs: {
+                                    text: {
+                                        "ro": {
+                                            "booking.title": "Programare online ArtroClinic",
+                                            "customer.acceptTermsText": "Am citit si sunt de acord cu \{0\} precum si cu \{1\}",
+                                            "business.terms": "Termenii si conditiile",
+                                            "business.privacy": "Politica de confidentialitate",
+                                        }
+                                    },
+                                    termsAndConditions: {
+                                        links: [
+                                            { label_key: 'business.terms', link: 'https://appbooking.ro/termeni-si-conditii'},
+                                            { label_key: 'business.privacy', link: 'https://appbooking.ro/politica-de-confidentialitate'}                                                   
+                                        ]
+                                    }
+                                }
+                        };
+    const root = ReactDOM.createRoot($('#booking').get(0));
+    root.render(appBookingPublic.AppBookingPublic( initConfigs ));
+});
+</script>
+</html>
