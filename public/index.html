@@ -34,7 +34,6 @@
         /* Extra small devices (phones, 600px and down) */
         @media only screen and (max-width: 600px) {
             .bookingContainer {
-            margin: 24px 8px;
             width: 100%;
             }
         }
@@ -109,13 +108,16 @@
 </body>
 <script>
 $(document).ready( function() {    
+    //get the integrationId from the query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const integrationId = urlParams.get('integrationId');
     const initConfigs = { 
-                        integrationId: '',
+                        integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         configs: {
                                     text: {
                                         "ro": {
-                                            "booking.title": "Programare online ArtroClinic",
+                                            "booking.title": "Programare online <Company name>",
                                             "customer.acceptTermsText": "Am citit si sunt de acord cu \{0\} precum si cu \{1\}",
                                             "business.terms": "Termenii si conditiile",
                                             "business.privacy": "Politica de confidentialitate",
