@@ -20,7 +20,7 @@ return (
             }
             return ( 
                 <div key={filterGroupItem.title_key} className="appBookingFacetGroup">
-                    <div className=""> { ltext.text(filterGroupItem.title_key) } </div>
+                    <div> { ltext.text(filterGroupItem.title_key) } </div>
                     { filterGroupItem.values.map ((filterItem) => {
                             return ( <div key={filterItem.id} className="mb-1 flex items-center"> 
                                         <input className="size-4 inline-block" id={filterItem.id} type="checkbox" checked={ getCheckedValue(filterGroupItem, filterItem.id) } onChange={ () => { onChangeItem(filterGroupItem.id, filterItem.id) } } /> 
