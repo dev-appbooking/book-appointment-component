@@ -2,7 +2,7 @@ export function capitalizeFirst(s) {
     return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
-export function formatLocalizedDateTime(d, language = 'ro') {
+export function formatLocalizedDateTime(date, language = 'ro') {
     const locales = {
         ro: 'ro-RO',
         en: 'en-GB'
@@ -13,17 +13,17 @@ export function formatLocalizedDateTime(d, language = 'ro') {
     const datePart = new Intl.DateTimeFormat(locale, {
         day: '2-digit',
         month: 'long',
-    }).format(d);
+    }).format(date);
 
     const weekday = new Intl.DateTimeFormat(locale, {
         weekday: 'long',
-    }).format(d);
+    }).format(date);
 
     const timePart = new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-    }).format(d);
+    }).format(date);
 
     const [day, month] = datePart.split(' ');
     const monthCap = month ? capitalizeFirst(month) : '';
