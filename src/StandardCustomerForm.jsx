@@ -22,7 +22,7 @@ function getFieldErrorContent(property) {
 }
 
 function getTermsCheckboxLabelContent() {
-    let rawTermsText = props.rawTextByKey('customer.acceptTermsText');
+    let rawTermsText = props.rawTextByKey('customer.acceptTerms');
     if (props.configs && props.configs.termsAndConditions) {
         let linksArray = props.configs.termsAndConditions.links;
         if (linksArray && Array.isArray(linksArray)) {
