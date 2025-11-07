@@ -10,7 +10,7 @@ import { BookingSummary } from './BookingSummary.jsx';
 import { FacetedFilter } from './FacetedFilter.jsx';
 import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
-import { formatRoDateTime} from "./utils/formatters";
+import {formatLocalizedDateTime, formatRoDateTime} from "./utils/formatters";
 
 /*
 This booking Page can have several steps depending on what services are setup.
@@ -496,7 +496,8 @@ export function BookingPageInternalApp (props) {
             let dateStr = format(startDate, "dd-LL-yyyy HH:mm");
             let title = ltext.textValue(getRawTextByKey('step.slot.done'), stepIndex + 1);
 
-            const pretty = formatRoDateTime(startDate);
+            const language = urlSearchParams.get('language') || 'ro';
+            const pretty = formatLocalizedDateTime(startDate, language);
 
             return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}>
                         <div className="appBookingAttributesLine">{pretty}</div>
