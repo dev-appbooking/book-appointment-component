@@ -118,6 +118,9 @@ $(document).ready( function() {
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         locale: locale,
                         configs: {
+                                    step_personal_data: {
+                                        mandatory_data: ['name', 'mobile']
+                                    },
                                     text: {
                                         "ro": {
                                             "booking.title": "Programare online <Company name>",

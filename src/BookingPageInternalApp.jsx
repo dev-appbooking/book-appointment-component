@@ -43,6 +43,12 @@ export function BookingPageInternalApp (props) {
     }
     const ltext = new LocalizationText(localizationTexts, props.locale || 'ro');             
 
+    let mandatoryPersonalData = [];
+    //check if property is a mandatory field
+    if (props.configs && props.configs.step_personal_data && Array.isArray(props.configs.step_personal_data.mandatory_data)) {
+        mandatoryPersonalData = props.configs.step_personal_data.mandatory_data;
+    }
+
     function integrationCountDepartments(skus) {
         let resDepartments = { } ;
         skus = skus || [];
@@ -206,9 +212,11 @@ export function BookingPageInternalApp (props) {
             }
         }  else {
             value = value.trim();
+            
+            
             if (property === 'name') {
-                if (value.length < 3) {
-                    errors['name'] = 'error.name_empty';
+                if ((value.length < 3) && mandatoryPersonalData.includes(property)) {
+                        errors['name'] = 'error.name_empty';
                 } else if (value.length > 30) {
                     errors['name'] = 'error.name_too_long';
                 } else if  (false === (/^[a-zA-Z\-''_0-9 ]{3,}$/.test(value))) {
@@ -216,14 +224,18 @@ export function BookingPageInternalApp (props) {
                 }
 
             } else if (property === 'email') {
-                if (value.length === 0) {
-                    errors['email'] = 'error.email_empty';
+                if (value.length === 0) { 
+                    if (mandatoryPersonalData.includes(property)) {
+                        errors['email'] = 'error.email_empty';
+                    }
                 } else if (false === (/^[a-zA-Z\-\.0-9_\+]{1,64}@[a-zA-Z\-\.0-9_\+]{3,100}$/.test(value))) {
                     errors['email'] = 'error.email_invalid';
                 }
             } else if (property === 'mobile') {
                 if (value.length === 0) {
-                    errors['mobile'] = 'error.mobile_empty';
+                    if (mandatoryPersonalData.includes(property)) {
+                        errors['mobile'] = 'error.mobile_empty';
+                    }
                 } else {
                     let sanitizedValue = '';
                     for(let x = 0; x < value.length; x++) {
@@ -500,12 +512,14 @@ export function BookingPageInternalApp (props) {
     }
 
     function getSubmitBookingBtnStatus() {
-        return ( (bookingData.step_personal_data.name.length > 0) &&
-                (bookingData.step_personal_data.email.length > 0) && 
-                (bookingData.step_personal_data.mobile.length > 0) && 
-                (bookingData.step_personal_data.acceptTerms === true) &&
+        //take into consideration if name, email and mobile are mandatory
+        return ( (bookingData.step_personal_data.name.length > 0) || (! mandatoryPersonalData.includes('name')) ) &&
+                ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) && 
+                ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) && 
+                ((bookingData.step_personal_data.acceptTerms === true) &&
                 (Object.keys(bookingData.step_personal_data.errors).length === 0) );
     }
+
     function contentForStep_personalData(stepIndex) {
         if (bookingData.step === 'step_personal_data') {
             return ( 
@@ -518,13 +532,15 @@ export function BookingPageInternalApp (props) {
                                                             rawTextByKey={getRawTextByKey}
                                                             configs={props.configs}
                                                             />
-        
-                    <div className="appBookingCtaContainer">
-                        <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
-                    </div>
+                        <div>
+                            {bookingStatus.status === 'error' && ( <div className="appBookingFormErrorText"> { ltext.text('error.generic')} </div>) }
+                        </div>
+                        <div className="appBookingCtaContainer">
+                            <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
+                        </div>
                 </div>
             );
-        } else if ((bookingData.step_personal_data.name.length > 0) && (bookingData.step_personal_data.mobile.length > 0) && (bookingData.step_personal_data.email.length > 0) && bookingData.step_personal_data.acceptTerms) {
+        } else if (((bookingData.step_personal_data.name.length > 0) || (bookingData.step_personal_data.mobile.length > 0) || (bookingData.step_personal_data.email.length > 0)) && bookingData.step_personal_data.acceptTerms) {
             let title = ltext.text('step.personalInfo.done', stepIndex + 1);
             return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
                         <>
