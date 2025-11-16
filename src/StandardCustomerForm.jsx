@@ -1,6 +1,10 @@
 
 export function StandardCustomerForm(props) { 
 const ltext = props.ltext;
+let mandatoryProperties = [];
+if (props.configs && props.configs.step_personal_data && Array.isArray(props.configs.step_personal_data.mandatory_data)) {
+    mandatoryProperties = props.configs.step_personal_data.mandatory_data;
+}
 function onChange(property, e) {
     if (props.onChange) {
         props.onChange(property, e);
@@ -35,10 +39,18 @@ function getTermsCheckboxLabelContent() {
     }
     return (<span> { rawTermsText } </span>);
 }
+
+function fieldOptionalLabel(fieldName) {
+    if (mandatoryProperties.includes(fieldName)) {
+        return ltext.text('field.mandatory');
+    } 
+    return ltext.text('field.optional');
+}
+
 return (
     <div>
             <fieldset className="appBookingFormFieldSet">
-                <label htmlFor="name" className="appBookingFormInputLabel"> { ltext.text('customer.name') } </label>
+                <label htmlFor="name" className="appBookingFormInputLabel"> { ltext.text('customer.name') }{fieldOptionalLabel('name') }</label>
                 <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.name} name="name" onChange={ (e) => { onChange('name', e)}} 
@@ -49,7 +61,7 @@ return (
             </fieldset>
 
             <fieldset className="appBookingFormFieldSet">
-                <label htmlFor="mobile" className="appBookingFormInputLabel"> { ltext.text('customer.mobile') } </label>
+                <label htmlFor="mobile" className="appBookingFormInputLabel"> { ltext.text('customer.mobile') }{fieldOptionalLabel('mobile') } </label>
                 <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.mobile} name="mobile" onChange={ (e) => { onChange('mobile', e)}}
@@ -60,7 +72,7 @@ return (
             </fieldset>
 
             <fieldset className="appBookingFormFieldSet">
-                <label htmlFor="email" className="appBookingFormInputLabel"> { ltext.text('customer.email') } </label>
+                <label htmlFor="email" className="appBookingFormInputLabel"> { ltext.text('customer.email') }{fieldOptionalLabel('email') } </label>
                 <div>
                     <input required className="appBookingFormInputText" type="text" 
                             value={props.customerData.email} name="email" onChange={ (e) => { onChange('email', e)}}

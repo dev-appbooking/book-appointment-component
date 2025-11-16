@@ -1,5 +1,7 @@
 export const localizationTexts = {
     'ro': {
+        'field.mandatory': '*',
+        'field.optional': ' (opțional)',
         'step.department': 'Pasul {0}. Alege categoria de servicii',
         'step.department.done': 'Pasul {0}. Categoria aleasă',
         'step.service': 'Pasul {0}. Alege serviciul dorit',
@@ -32,10 +34,13 @@ export const localizationTexts = {
         'error.name_too_long': 'Numele trebuie să fie mai scurt de 30 caractere',
         'error.name_invalid': 'Numele poate conține numai litere si cifre, fara diacritice',
         'error.mobile_invalid': 'Numar mobil invalid',
-        'error.email_invalid': 'Email format invalid'
+        'error.email_invalid': 'Email format invalid',
+        'error.generic': 'A aparaut o eroare neasteptata. Te rugam sa incerci mai tarziu.'
     },
 
     'en': {
+        'field.mandatory': '*',
+        'field.optional': ' (optional)',
         'step.department': 'Step {0}. Select a service category',
         'step.department.done': 'Step {0}. Selected service category',
         'step.service': 'Step {0}. Choose a service',
@@ -68,6 +73,7 @@ export const localizationTexts = {
         'error.name_too_long': 'Name needs to be less than 30 letters',
         'error.name_invalid': 'Name can contain only letters and digits',
         'error.mobile_invalid': 'Mobile number invalid',
-        'error.email_invalid': 'Invalid email format'
+        'error.email_invalid': 'Invalid email format',
+        'error.generic': 'Unexpected error, please try again later.'
     }
 };
