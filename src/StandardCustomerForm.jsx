@@ -1,10 +1,8 @@
 
 export function StandardCustomerForm(props) { 
 const ltext = props.ltext;
-let mandatoryProperties = [];
-if (props.configs && props.configs.step_personal_data && Array.isArray(props.configs.step_personal_data.mandatory_data)) {
-    mandatoryProperties = props.configs.step_personal_data.mandatory_data;
-}
+let mandatoryProperties = props.configs.step_personal_data.mandatory_data;
+
 function onChange(property, e) {
     if (props.onChange) {
         props.onChange(property, e);

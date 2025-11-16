@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { httpRequest } from './HttpRequest';
+import {formatLocalizedDateTime} from "./utils/formatters";
 
 let PublicNextAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
@@ -23,7 +24,8 @@ let PublicNextAppSlot = function(props) {
         let daysArray = [];
         let usedSlots = {};
         suggestedEvents.forEach( (slot) => {
-            let day = format( new Date(slot.startDate), "dd-LL-yyyy");
+            let day = formatLocalizedDateTime(new Date(slot.startDate), props.ltext.locale);
+            //let day = format( new Date(slot.startDate), "dd-LL-yyyy");
             if ((daysArray.length === 0) || ((daysArray.length > 0) && (daysArray[daysArray.length - 1][0].day !== day))) {
                 
                 if (props.maxDaysToShow && (props.maxDaysToShow === daysArray.length)) {
@@ -47,17 +49,17 @@ let PublicNextAppSlot = function(props) {
             
         });
         return (
-            <div className="">
+            <>
             { 
                 daysArray.map( (daySlots) => {
                     let isThisDaySelected = props.selectedBookingSlot && (daySlots[0].day === props.selectedBookingSlot.day);
                     let foundSelection = false;
                     return (
                         <div key={daySlots[0].day}>
-                            <div>
+                            <div className="appBookingDateLine">
                                 {daySlots[0].day}
                             </div>
-                            <div className="appBookingTimeContainer" >
+                            <div className="appBookingTimeSlotsContainer" >
                             { daySlots.map ( (slot, index) => {
                                     if ((!showMoreDays[slot.day]) && (index >= props.initialSlotsPerDay)) {
                                         if (!isThisDaySelected) {
@@ -88,7 +90,7 @@ let PublicNextAppSlot = function(props) {
                         </div> );
                 })
             }
-            </div>
+            </>
         )
     }
 

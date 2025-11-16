@@ -43,12 +43,8 @@ export function BookingPageInternalApp (props) {
     }
     const ltext = new LocalizationText(localizationTexts, props.locale || 'ro');             
 
-    let mandatoryPersonalData = [];
-    //check if property is a mandatory field
-    if (props.configs && props.configs.step_personal_data && Array.isArray(props.configs.step_personal_data.mandatory_data)) {
-        mandatoryPersonalData = props.configs.step_personal_data.mandatory_data;
-    }
-
+    let mandatoryPersonalData = props.configs.step_personal_data.mandatory_data;
+    
     function integrationCountDepartments(skus) {
         let resDepartments = { } ;
         skus = skus || [];
@@ -488,6 +484,7 @@ export function BookingPageInternalApp (props) {
                                         initialSlotsPerDay={5}
                                         onSelectSlot={onSelectBookingSlot}
                                         selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
+                                        ltext={ltext}
                     />
                 </div>
             )
