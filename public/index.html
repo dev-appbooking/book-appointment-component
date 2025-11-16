@@ -111,9 +111,12 @@ $(document).ready( function() {
     //get the integrationId from the query params
     const urlParams = new URLSearchParams(window.location.search);
     const integrationId = urlParams.get('integrationId');
+    const locale = urlParams.get('locale');
+    
     const initConfigs = { 
                         integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
+                        locale: locale,
                         configs: {
                                     text: {
                                         "ro": {

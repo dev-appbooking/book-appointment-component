@@ -19,15 +19,11 @@ export function formatLocalizedDateTime(date, language = 'ro') {
         weekday: 'long',
     }).format(date);
 
-    const timePart = new Intl.DateTimeFormat(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).format(date);
+    const dmy = new Intl.DateTimeFormat(locale).format(date);
 
     const [day, month] = datePart.split(' ');
     const monthCap = month ? capitalizeFirst(month) : '';
     const weekdayCap = capitalizeFirst(weekday);
 
-    return `${day} ${monthCap} (${weekdayCap}) - ${timePart}`;
+    return `${weekdayCap}, ${day} ${monthCap} (${dmy})`;
 }

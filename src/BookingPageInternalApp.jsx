@@ -10,7 +10,7 @@ import { BookingSummary } from './BookingSummary.jsx';
 import { FacetedFilter } from './FacetedFilter.jsx';
 import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
-import {formatLocalizedDateTime, formatRoDateTime} from "./utils/formatters";
+import {formatLocalizedDateTime} from "./utils/formatters";
 
 /*
 This booking Page can have several steps depending on what services are setup.
@@ -41,9 +41,7 @@ export function BookingPageInternalApp (props) {
     if (props.appBookingApiBaseUrl) {
         apiBase = props.appBookingApiBaseUrl;
     }
-    let urlSearchParams = new URLSearchParams(window.location.search);
-    const integrationIdParam = 'integrationId';
-    const ltext = new LocalizationText(localizationTexts, urlSearchParams.get('language') || 'ro');
+    const ltext = new LocalizationText(localizationTexts, props.locale || 'ro');             
 
     function integrationCountDepartments(skus) {
         let resDepartments = { } ;
@@ -63,17 +61,8 @@ export function BookingPageInternalApp (props) {
     useEffect ( () => {
         (async function() {
             try {
-                let urlSearchParams = new URLSearchParams(window.location.search);
-                const integrationIdParam = 'integrationId';
                 let integrationId = props.integrationId;
-
-                if (!integrationId) {
-                    //try to get from query params
-                    if (urlSearchParams.has(integrationIdParam)) {
-                    integrationId = urlSearchParams.get('integrationId') ;
-                    }
-                }
-
+                
                 if (integrationId) {
                     setfetchData({  ...fetchData, fetching: true, status: 'not_fetched'});
                     let skusObj = await httpRequest('GET', apiBase + '/api/bookingData/' + integrationId);
@@ -265,7 +254,7 @@ export function BookingPageInternalApp (props) {
                 bookingDate: bookingData.step_choose_slot.bookingSlot.slot.startDate,
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 name: bookingData.step_personal_data.name,
-                language: 'ro',
+                language: ltext.locale,
                 mobile: bookingData.step_personal_data.mobile,
                 email: bookingData.step_personal_data.email
             }
@@ -493,15 +482,15 @@ export function BookingPageInternalApp (props) {
         } else if ((bookingData.step != 'step_choose_slot') && bookingData.step_choose_slot.bookingSlot) {
 
             let startDate = new Date(bookingData.step_choose_slot.bookingSlot.slot.startDate);
-            let dateStr = format(startDate, "dd-LL-yyyy HH:mm");
+            let timeStr = ltext.textValue(ltext.text('step.slot.hour'), format(startDate, "HH:mm"));
+            
             let title = ltext.textValue(getRawTextByKey('step.slot.done'), stepIndex + 1);
 
-            const language = urlSearchParams.get('language') || 'ro';
-            const pretty = formatLocalizedDateTime(startDate, language);
+            const pretty = formatLocalizedDateTime(startDate, ltext.locale);
 
             return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}>
                         <div className="appBookingAttributesLine">{pretty}</div>
-                        <div className="appBookingAttributesLine"> { dateStr } </div>
+                        <div className="appBookingAttributesLine"> {timeStr} </div>
                     </StepSummary>)
         } else {
             return (
