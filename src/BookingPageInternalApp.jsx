@@ -40,9 +40,7 @@ export function BookingPageInternalApp (props) {
     if (props.appBookingApiBaseUrl) {
         apiBase = props.appBookingApiBaseUrl;
     }
-    let urlSearchParams = new URLSearchParams(window.location.search);
-    const integrationIdParam = 'integrationId';
-    const ltext = new LocalizationText(localizationTexts, urlSearchParams.get('language') || 'ro');             
+    const ltext = new LocalizationText(localizationTexts, props.locale || 'ro');             
 
     function integrationCountDepartments(skus) {
         let resDepartments = { } ;
@@ -62,17 +60,8 @@ export function BookingPageInternalApp (props) {
     useEffect ( () => {
         (async function() {
             try {
-                let urlSearchParams = new URLSearchParams(window.location.search);
-                const integrationIdParam = 'integrationId';
                 let integrationId = props.integrationId;
                 
-                if (!integrationId) {
-                    //try to get from query params
-                    if (urlSearchParams.has(integrationIdParam)) {
-                    integrationId = urlSearchParams.get('integrationId') ;
-                    }
-                }
-
                 if (integrationId) {
                     setfetchData({  ...fetchData, fetching: true, status: 'not_fetched'});
                     let skusObj = await httpRequest('GET', apiBase + '/api/bookingData/' + integrationId);

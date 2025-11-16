@@ -1,10 +1,10 @@
 import { BookingPageInternalApp } from "./BookingPageInternalApp.jsx";
 
 export function AppBookingPublic (props) {
-    let { integrationId, appBookingApiBaseUrl, configs } = props;
+    let { integrationId, locale, appBookingApiBaseUrl, configs } = props;
     return (      
         <>
-            <BookingPageInternalApp integrationId={integrationId} appBookingApiBaseUrl={appBookingApiBaseUrl} configs={configs} />
+            <BookingPageInternalApp locale={locale} integrationId={integrationId} appBookingApiBaseUrl={appBookingApiBaseUrl} configs={configs} />
         </>
     )
 }
