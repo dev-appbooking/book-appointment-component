@@ -485,6 +485,7 @@ export function BookingPageInternalApp (props) {
                                         onSelectSlot={onSelectBookingSlot}
                                         selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
                                         ltext={ltext}
+                                        rawTextByKey={getRawTextByKey}
                     />
                 </div>
             )
@@ -514,7 +515,7 @@ export function BookingPageInternalApp (props) {
                 ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) && 
                 ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) && 
                 ((bookingData.step_personal_data.acceptTerms === true) &&
-                (Object.keys(bookingData.step_personal_data.errors).length === 0) );
+                (Object.keys(bookingData.step_personal_data.errors).length === 0) && ! bookingStatus.submit );
     }
 
     function contentForStep_personalData(stepIndex) {
@@ -530,7 +531,7 @@ export function BookingPageInternalApp (props) {
                                                             configs={props.configs}
                                                             />
                         <div>
-                            {bookingStatus.status === 'error' && ( <div className="appBookingFormErrorText"> { ltext.text('error.generic')} </div>) }
+                            {bookingStatus.status === 'error' && ( <div className="appBookingErrorText"> { ltext.text('error.generic')} </div>) }
                         </div>
                         <div className="appBookingCtaContainer">
                             <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
@@ -564,7 +565,7 @@ export function BookingPageInternalApp (props) {
             if ( ['error', 'success'].includes(bookingStatus.status)) {
                 let title = ltext.text('step.confirmation', stepIndex + 1);
                 return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
-                                { (bookingStatus.status === 'error') &&  (<div className="">
+                                { (bookingStatus.status === 'error') &&  (<div className="appBookingErrorText">
                                                                              { ltext.text('booking.error') }
                                                                         </div>)
                                 }
