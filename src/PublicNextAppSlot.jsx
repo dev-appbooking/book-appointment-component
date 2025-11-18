@@ -5,12 +5,11 @@ import {formatLocalizedDateTime} from "./utils/formatters";
 
 let PublicNextAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
-    const [fetchingData, setFetchingData] = useState(false);
-    const [selectedSlot, setSelectedSlot] = useState(null);
+    const [fetchingData, setFetchingData] = useState({ fetching: false, status: 'not_fetched' });
     const [showMoreDays, setShowMoreDays] = useState({});
+    let ltext = props.ltext;
 
     function selectSlot(slot) {
-        setSelectedSlot(slot);
         if (props.onSelectSlot) {
             props.onSelectSlot(slot);
         }
@@ -20,7 +19,31 @@ let PublicNextAppSlot = function(props) {
         setShowMoreDays( {...showMoreDays, [dayStr]: true } );
     }
 
+    function errorContent() {
+        return (
+            <div className="appBookingTimeSlotsContainer" >
+                { ltext.text('error.generic') }
+            </div>
+        )
+    }
+    
+    function noSlotsContent() {
+        return (
+            <div className="appBookingTimeSlotsContainer" >
+                <span className="appBookingWarningText"> { ltext.text('step.slot.noSlots') } </span>
+            </div>
+        )
+    }
+
     function getSuggestedSlotsContent() {
+        if (fetchingData.status !== 'success') {
+            return errorContent();
+        }
+        
+        if (suggestedEvents.length === 0) {
+            return noSlotsContent();
+        }
+
         let daysArray = [];
         let usedSlots = {};
         suggestedEvents.forEach( (slot) => {
@@ -98,7 +121,7 @@ let PublicNextAppSlot = function(props) {
         ( async () => { 
             try {
 
-                setFetchingData(true);
+                setFetchingData({ fetching: true, status: 'not_fetched' });
                 let bodyReq = {
                     serviceSkuId: props.skuId,
                     specialistId: props.specialistId,
@@ -108,16 +131,16 @@ let PublicNextAppSlot = function(props) {
                 }
                 let res = await httpRequest('POST', props.apiBase + "/api/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
-                setFetchingData(false);
+                setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {
-                setFetchingData(false);
+                setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
     }, [props.specialistId, props.startDate] );
 
     return (<>
-        { !fetchingData && getSuggestedSlotsContent() }
-        { fetchingData && (<div> in progress... </div>) }
+        { !fetchingData.fetching && getSuggestedSlotsContent() }
+        { fetchingData.fetching && (<div> in progress... </div>) }
     </>)
 }
 
