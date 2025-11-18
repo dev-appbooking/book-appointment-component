@@ -10,40 +10,41 @@ import { BookingSummary } from './BookingSummary.jsx';
 import { FacetedFilter } from './FacetedFilter.jsx';
 import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
+import {formatLocalizedDateTime} from "./utils/formatters";
 
 /*
 This booking Page can have several steps depending on what services are setup.
 */
 export function BookingPageInternalApp (props) {
-    
+
     const [ fetchData, setfetchData ] = useState({ fetching: false, status: 'not_fetched', data: [] } );
-   
+
     const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', step_choose_department: { departmentId: null, departmentIndex: null, enforceDepartment: false, showEdit: true, displayChooseDepartment: false },
-                                                                  step_choose_service: {  skuId: null, 
-                                                                            locationId: null, 
-                                                                            serviceIndex: null, 
-                                                                            specialistId: null, 
+                                                                  step_choose_service: {  skuId: null,
+                                                                            locationId: null,
+                                                                            serviceIndex: null,
+                                                                            specialistId: null,
                                                                             showEdit: true,
                                                                             filterSelections: { },
                                                                             displayFacetedSearch: false
-                                                                         } , 
-                                                                  step_choose_slot: { bookingSlot: null, showEdit: true }, 
-                                                                  step_personal_data: { name: '', mobile: '', email: '', acceptTerms: false, errors: { } }, 
+                                                                         } ,
+                                                                  step_choose_slot: { bookingSlot: null, showEdit: true },
+                                                                  step_personal_data: { name: '', mobile: '', email: '', acceptTerms: false, errors: { } },
                                                                   step_confirmation: { bookingConfirmationId: null },
                                                                   bookingStatus: 'initial', submitted: false,
                                                                   integrationId: null,
                                                                   organizationId: null } );
 
     const [ bookingStatus, setBookingStatus] = useState({ submit: false, status: 'initial' });
-                                                                
+
     let apiBase = 'https://www.appbooking.ro';
     if (props.appBookingApiBaseUrl) {
         apiBase = props.appBookingApiBaseUrl;
     }
-    let urlSearchParams = new URLSearchParams(window.location.search);
-    const integrationIdParam = 'integrationId';
-    const ltext = new LocalizationText(localizationTexts, urlSearchParams.get('language') || 'ro');             
+    const ltext = new LocalizationText(localizationTexts, props.locale || 'ro');             
 
+    let mandatoryPersonalData = props.configs.step_personal_data.mandatory_data;
+    
     function integrationCountDepartments(skus) {
         let resDepartments = { } ;
         skus = skus || [];
@@ -62,17 +63,8 @@ export function BookingPageInternalApp (props) {
     useEffect ( () => {
         (async function() {
             try {
-                let urlSearchParams = new URLSearchParams(window.location.search);
-                const integrationIdParam = 'integrationId';
                 let integrationId = props.integrationId;
                 
-                if (!integrationId) {
-                    //try to get from query params
-                    if (urlSearchParams.has(integrationIdParam)) {
-                    integrationId = urlSearchParams.get('integrationId') ;
-                    }
-                }
-
                 if (integrationId) {
                     setfetchData({  ...fetchData, fetching: true, status: 'not_fetched'});
                     let skusObj = await httpRequest('GET', apiBase + '/api/bookingData/' + integrationId);
@@ -83,26 +75,26 @@ export function BookingPageInternalApp (props) {
                     if (hasDepartments) {
                         step = 'step_choose_department';
                     }
-                    setBookingData( { ...bookingData, integrationId: integrationId, organizationId: (skusObj.skus[0].sku.organizationId), 
+                    setBookingData( { ...bookingData, integrationId: integrationId, organizationId: (skusObj.skus[0].sku.organizationId),
                                                     step: step,
                                                     step_choose_service: { ...bookingData.step_choose_service, showEdit: skusObj.skus.length > 1 } ,
                                                     step_choose_department: { ...bookingData.step_choose_department, displayChooseDepartment: hasDepartments }
                         } );
-                    
+
                 } else {
                     setfetchData({ ...fetchData, fetching: false, status: 'no_integrationIdParam' });
                 }
 
-            } 
+            }
             catch (e) {
                 setfetchData({ ...fetchData,  fetching: false, status: 'error', data: [] });
             }
             })();
-        }, 
+        },
     [ ]);
 
     function onSelectService(serviceItem, index) {
-        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceIndex: index, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} }, 
+        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceIndex: index, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
     }
@@ -124,38 +116,38 @@ export function BookingPageInternalApp (props) {
         }
 
         return (<div className="appBookingServiceContainer">
-                    <div className="appBokingServiceLineItem appBookingServiceHeader"> 
+                    <div className="appBokingServiceLineItem appBookingServiceHeader">
                         <div className="appBookingContentGrow"> { item.sku.name } </div>
-                        { isSelected && <div className="appBookingSelectedItemIcon"> 
+                        { isSelected && <div className="appBookingSelectedItemIcon">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
                             </div>
-                        } 
+                        }
                     </div>
                     { getSpecialistContent() }
-                
+
                     <div className="appBokingServiceLineItem">
-                        <div className="appBookingServiceAttr"> 
+                        <div className="appBookingServiceAttr">
                             <div className="appBookingServiceAttrIcon">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" strokeWidth="1.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
                             </div>
                             <div className="appBookingServiceAttrContent">
-                                    { item.sku.duration } minute 
+                                    { item.sku.duration } minute
                             </div>
-                            
+
                         </div>
-                            
-                        <div className="appBookingServiceAttr"> 
+
+                        <div className="appBookingServiceAttr">
                             <div className="appBookingServiceAttrIcon">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" strokeWidth="1.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                                 </svg>
                             </div>
-                            <div className="appBookingServiceAttrContent"> 
+                            <div className="appBookingServiceAttrContent">
                                 { item.location.name }
                             </div>
                         </div>
@@ -168,21 +160,21 @@ export function BookingPageInternalApp (props) {
     function departmentItemContent(item, isSelected) {
         return ( <>
                 <div className="appBookingContentGrow"> { item.name } </div>
-                { isSelected && <div className="appBookingSelectedItemIcon"> 
+                { isSelected && <div className="appBookingSelectedItemIcon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
-                </div> } 
+                </div> }
                 </> );
     }
-    
+
     function departmentSummaryItemContent(item) {
         return ( <div>  { item.name } </div> )
     }
 
     function onSelectDepartment(departmentItem, index) {
         setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id, departmentIndex: index },
-                                                   step_choose_service: { ...bookingData.step_choose_service, serviceIndex: null, skuId: null, specialistId: null, locationId: null, filterSelections: {} }, 
+                                                   step_choose_service: { ...bookingData.step_choose_service, serviceIndex: null, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
     }
@@ -216,9 +208,11 @@ export function BookingPageInternalApp (props) {
             }
         }  else {
             value = value.trim();
+            
+            
             if (property === 'name') {
-                if (value.length < 3) {
-                    errors['name'] = 'error.name_empty';
+                if ((value.length < 3) && mandatoryPersonalData.includes(property)) {
+                        errors['name'] = 'error.name_empty';
                 } else if (value.length > 30) {
                     errors['name'] = 'error.name_too_long';
                 } else if  (false === (/^[a-zA-Z\-''_0-9 ]{3,}$/.test(value))) {
@@ -226,26 +220,30 @@ export function BookingPageInternalApp (props) {
                 }
 
             } else if (property === 'email') {
-                if (value.length === 0) {
-                    errors['email'] = 'error.email_empty';
+                if (value.length === 0) { 
+                    if (mandatoryPersonalData.includes(property)) {
+                        errors['email'] = 'error.email_empty';
+                    }
                 } else if (false === (/^[a-zA-Z\-\.0-9_\+]{1,64}@[a-zA-Z\-\.0-9_\+]{3,100}$/.test(value))) {
                     errors['email'] = 'error.email_invalid';
                 }
             } else if (property === 'mobile') {
                 if (value.length === 0) {
-                    errors['mobile'] = 'error.mobile_empty';
-                } else {                   
+                    if (mandatoryPersonalData.includes(property)) {
+                        errors['mobile'] = 'error.mobile_empty';
+                    }
+                } else {
                     let sanitizedValue = '';
                     for(let x = 0; x < value.length; x++) {
                         if (((value[x] >= '0') && (value[x] <= '9')) || (value[x] === '+')) {
                             sanitizedValue = sanitizedValue + value[x];
                         }
-                    } 
+                    }
                     if  (false === (/^\+{0,1}([0-9]){9,14}$/.test(sanitizedValue))) {
                         errors['mobile'] = 'error.mobile_invalid';
                     }
                 }
-            } 
+            }
         }
         setBookingData( { ...bookingData, step: 'step_personal_data', step_personal_data: { ...bookingData.step_personal_data, errors: errors } } );
     }
@@ -264,24 +262,24 @@ export function BookingPageInternalApp (props) {
                 bookingDate: bookingData.step_choose_slot.bookingSlot.slot.startDate,
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 name: bookingData.step_personal_data.name,
-                language: 'ro',
+                language: ltext.locale,
                 mobile: bookingData.step_personal_data.mobile,
                 email: bookingData.step_personal_data.email
             }
             let res = await httpRequest('POST', apiBase + "/api/appointment/booking", bodyReq, { 'content-type': 'application/json'});
             setBookingData( { ...bookingData, step: 'step_confirmation', step_confirmation: { bookingConfirmationId: res.id },
                                                                 step_choose_department: { ...bookingData.step_choose_department, showEdit: false},
-                                                                step_choose_service: { ...bookingData.step_choose_service, showEdit: false},  
+                                                                step_choose_service: { ...bookingData.step_choose_service, showEdit: false},
                                                                 step_choose_slot: { ...bookingData.step_choose_slot, showEdit: false} } );
             setBookingStatus({ submit: false, status: 'success' });
 
         } catch (e) {
             setBookingStatus({ submit: false, status: 'error' });
-        }    
+        }
     }
 
     function onEditStepChooseDepartment() {
-        setBookingData( { ...bookingData, step: 'step_choose_department', 'step_choose_service': { ...bookingData.step_choose_service, specialistId: null, serviceIndex: null, skuId: null, locationId: null, filterSelections: {} }, 
+        setBookingData( { ...bookingData, step: 'step_choose_department', 'step_choose_service': { ...bookingData.step_choose_service, specialistId: null, serviceIndex: null, skuId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
                         } );
     }
@@ -371,21 +369,21 @@ export function BookingPageInternalApp (props) {
         if (bookingData.step === 'step_choose_department') {
             return (<>
                         <div className="appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.department'), stepIndex + 1 ) } </div>
-                        <CustomList 
-                        items={ allDepartmentsData } onSelectItem={onSelectDepartment} 
-                        selectedIndex={bookingData.step_choose_department.departmentIndex} 
-                        itemContent={departmentItemContent} 
+                        <CustomList
+                        items={ allDepartmentsData } onSelectItem={onSelectDepartment}
+                        selectedIndex={bookingData.step_choose_department.departmentIndex}
+                        itemContent={departmentItemContent}
                         ltext={ltext} />
-                        
-                    </> 
+
+                    </>
                     );
         } else {
             if (bookingData.step !== 'step_choose_department') {
             let title = ltext.textValue(getRawTextByKey('step.department.done'), stepIndex + 1);
-            return (<StepSummary title={title} onEdit={onEditStepChooseDepartment} showEdit={bookingData.step_choose_department.showEdit} ltext={ltext}> 
+            return (<StepSummary title={title} onEdit={onEditStepChooseDepartment} showEdit={bookingData.step_choose_department.showEdit} ltext={ltext}>
                         { departmentSummaryItemContent(selectedDepartment) }
                     </StepSummary>)
-            } 
+            }
         }
     }
 
@@ -397,7 +395,7 @@ export function BookingPageInternalApp (props) {
 
         // if true it uses a single service sku no matter how many specialists asscociated
         let oneServicePerSkuAndSpecialists = ((props.configs && props.configs.oneServicePerSkuAndSpecialists) ? props.configs.oneServicePerSkuAndSpecialists : false );
-        
+
         fetchData.data.forEach( sku => {
             sku.data.forEach( (itemData, index) => {
                 // check if the department from step 1 is set for this sku data
@@ -411,10 +409,10 @@ export function BookingPageInternalApp (props) {
                     }
                 }
                 if ((! foundDepartment) && bookingData.step_choose_department.displayChooseDepartment) {
-                    return; 
+                    return;
                 }
                 let objSku = { sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
-                
+
                 if (!oneServicePerSkuAndSpecialists) {
                     specialists[itemData.specialist.id] =  { id:  itemData.specialist.id, value: getSpecialistFullName(itemData.specialist) };
                     objSku.specialist = itemData.specialist;
@@ -423,7 +421,7 @@ export function BookingPageInternalApp (props) {
                 }
 
                 locations[itemData.location.id] = { id: itemData.location.id, value: `${itemData.location.name} (${itemData.location.city})` };
-                
+
                 if (!oneServicePerSkuAndSpecialists) {
                     allSkuData.push( objSku );
                 } else {
@@ -439,7 +437,7 @@ export function BookingPageInternalApp (props) {
                         allSkuData.push( objSku );
                     }
                 }
-                
+
                 if (objSku.sku.id === bookingData.step_choose_service.skuId && objSku.location.id === bookingData.step_choose_service.locationId && objSku.specialist.id === bookingData.step_choose_service.specialistId) {
                     selectedService = objSku;
                 }
@@ -447,26 +445,26 @@ export function BookingPageInternalApp (props) {
         });
         if (bookingData.step === 'step_choose_service') {
             let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1);
-            let filterData = { items: fetchData.data, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) }, 
+            let filterData = { items: fetchData.data, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
                                                                      { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) } ],
                                     filterSelections: bookingData.step_choose_service.filterSelections
                                 } ;
-            return ( 
+            return (
             <div>
                 <div className="appBookingActiveStepTitle"> { ltext.text('step.service', stepIndex + 1) } </div>
                     { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
-                    <CustomList 
-                        items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService} 
-                        selectedIndex={bookingData.step_choose_service.serviceIndex} 
-                        expand={true} 
-                        itemContent={serviceItemContent} 
+                    <CustomList
+                        items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService}
+                        selectedIndex={bookingData.step_choose_service.serviceIndex}
+                        expand={true}
+                        itemContent={serviceItemContent}
                         ltext={ltext} />
             </div>
             )
         } else if ((bookingData.step !== 'step_choose_service') && selectedService) {
             let title = ltext.text('step.service.done', stepIndex + 1);
-            return (<StepSummary title={title} onEdit={onEditStepChooseService} showEdit={bookingData.step_choose_service.showEdit} ltext={ltext}> 
-                        { serviceItemContent(selectedService) } 
+            return (<StepSummary title={title} onEdit={onEditStepChooseService} showEdit={bookingData.step_choose_service.showEdit} ltext={ltext}>
+                        { serviceItemContent(selectedService) }
                     </StepSummary>)
         }  else {
             return (
@@ -480,23 +478,29 @@ export function BookingPageInternalApp (props) {
             return (
                 <div>
                     <div className="appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
-                    <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId} 
-                                        specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId} 
+                    <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
+                                        specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
                                         maxDaysToShow={3}
                                         initialSlotsPerDay={5}
                                         onSelectSlot={onSelectBookingSlot}
                                         selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
+                                        ltext={ltext}
+                                        rawTextByKey={getRawTextByKey}
                     />
                 </div>
             )
         } else if ((bookingData.step != 'step_choose_slot') && bookingData.step_choose_slot.bookingSlot) {
 
             let startDate = new Date(bookingData.step_choose_slot.bookingSlot.slot.startDate);
-            let dateStr = format(startDate, "dd-LL-yyyy HH:mm");
+            let timeStr = ltext.textValue(ltext.text('step.slot.hour'), format(startDate, "HH:mm"));
+            
             let title = ltext.textValue(getRawTextByKey('step.slot.done'), stepIndex + 1);
-            return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}> 
-                        <div className="appBookingAttributesLine">  11 Noiembrie (Marți) - 09:45</div>
-                        <div className="appBookingAttributesLine"> { dateStr } </div>
+
+            const pretty = formatLocalizedDateTime(startDate, ltext.locale);
+
+            return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}>
+                        <div className="appBookingAttributesLine">{pretty}</div>
+                        <div className="appBookingAttributesLine"> {timeStr} </div>
                     </StepSummary>)
         } else {
             return (
@@ -506,12 +510,14 @@ export function BookingPageInternalApp (props) {
     }
 
     function getSubmitBookingBtnStatus() {
-        return ( (bookingData.step_personal_data.name.length > 0) &&
-                (bookingData.step_personal_data.email.length > 0) && 
-                (bookingData.step_personal_data.mobile.length > 0) && 
-                (bookingData.step_personal_data.acceptTerms === true) &&
-                (Object.keys(bookingData.step_personal_data.errors).length === 0) );
+        //take into consideration if name, email and mobile are mandatory
+        return ( (bookingData.step_personal_data.name.length > 0) || (! mandatoryPersonalData.includes('name')) ) &&
+                ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) && 
+                ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) && 
+                ((bookingData.step_personal_data.acceptTerms === true) &&
+                (Object.keys(bookingData.step_personal_data.errors).length === 0) && ! bookingStatus.submit );
     }
+
     function contentForStep_personalData(stepIndex) {
         if (bookingData.step === 'step_personal_data') {
             return ( 
@@ -524,13 +530,15 @@ export function BookingPageInternalApp (props) {
                                                             rawTextByKey={getRawTextByKey}
                                                             configs={props.configs}
                                                             />
-        
-                    <div className="appBookingCtaContainer">
-                        <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
-                    </div>
+                        <div>
+                            {bookingStatus.status === 'error' && ( <div className="appBookingErrorText"> { ltext.text('error.generic')} </div>) }
+                        </div>
+                        <div className="appBookingCtaContainer">
+                            <button disabled={ ! getSubmitBookingBtnStatus() } className="appBookingCtaButton" onClick={createBooking} > { ltext.text('ctaBooking') }</button>
+                        </div>
                 </div>
             );
-        } else if ((bookingData.step_personal_data.name.length > 0) && (bookingData.step_personal_data.mobile.length > 0) && (bookingData.step_personal_data.email.length > 0) && bookingData.step_personal_data.acceptTerms) {
+        } else if (((bookingData.step_personal_data.name.length > 0) || (bookingData.step_personal_data.mobile.length > 0) || (bookingData.step_personal_data.email.length > 0)) && bookingData.step_personal_data.acceptTerms) {
             let title = ltext.text('step.personalInfo.done', stepIndex + 1);
             return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
                         <>
@@ -557,7 +565,7 @@ export function BookingPageInternalApp (props) {
             if ( ['error', 'success'].includes(bookingStatus.status)) {
                 let title = ltext.text('step.confirmation', stepIndex + 1);
                 return (<StepSummary title={title} showEdit={false} ltext={ltext} > 
-                                { (bookingStatus.status === 'error') &&  (<div className="">
+                                { (bookingStatus.status === 'error') &&  (<div className="appBookingErrorText">
                                                                              { ltext.text('booking.error') }
                                                                         </div>)
                                 }

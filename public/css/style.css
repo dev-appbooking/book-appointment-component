@@ -143,7 +143,7 @@
     padding: 0px 8px 0px 4px;
 }
 
-.appBookingTimeContainer {
+.appBookingTimeSlotsContainer {
     display:flex;
     flex-wrap: wrap;
 }
@@ -206,9 +206,16 @@
     font-size: 1em;
 }
 .appBookingFormErrorText {
-    color: red;
+    color: #D32F2F;
     font-size: 0.85em;
 }
+.appBookingErrorText {
+    color: #D32F2F;
+}
+.appBookingWarningText {
+    color: #d96724;
+}
+
 .appBookingFormInputCheckbox {
     width: 20px;
     height: 20px;
