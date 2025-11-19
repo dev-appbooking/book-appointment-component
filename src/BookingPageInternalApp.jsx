@@ -37,6 +37,8 @@ export function BookingPageInternalApp (props) {
 
     const [ bookingStatus, setBookingStatus] = useState({ submit: false, status: 'initial' });
 
+    const [eventData, setEventData] = useState({fetching: false, status: 'initial', data: null });
+
     let apiBase = 'https://www.appbooking.ro';
     if (props.appBookingApiBaseUrl) {
         apiBase = props.appBookingApiBaseUrl;
@@ -92,6 +94,26 @@ export function BookingPageInternalApp (props) {
             })();
         },
     [ ]);
+
+        useEffect(() => {
+        if (!props.eventId) {
+            return;
+        }
+
+        (async function () {
+            try {
+                setEventData({ fetching: true, status: 'not_fetched', data: null });
+                const bookingEvent = await httpRequest(
+                    'GET',
+                    apiBase + '/api/event/booking/' + props.eventId
+                );
+                setEventData({ fetching: false, status: 'success', data: bookingEvent });
+            } catch (e) {
+                setEventData({ fetching: false, status: 'error', data: null });
+            }
+        })();
+    }, [props.eventId, apiBase]);
+
 
     function onSelectService(serviceItem, index) {
         setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceIndex: index, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
@@ -333,6 +355,125 @@ export function BookingPageInternalApp (props) {
         });
         return result;
     }
+
+
+        function buildEventDetails(event, skus) {
+        if (!event) {
+            return null;
+        }
+
+        const { customData, startDate, duration, specialistId, locationId, serviceSkuId, language } = event;
+
+        let service = null;
+        let specialist = null;
+        let location = null;
+
+        (skus || []).forEach(skuWrapper => {
+            if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
+
+            if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
+                service = skuWrapper.sku;
+
+                skuWrapper.data.forEach(itemData => {
+                    if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
+                        specialist = itemData.specialist;
+                    }
+                    if (itemData.location && String(itemData.location.id) === String(locationId)) {
+                        location = itemData.location;
+                    }
+                });
+            }
+        });
+
+        return {
+            customer: customData || {},
+            startDate,
+            duration,
+            language,
+            service,
+            specialist,
+            location
+        };
+    }
+
+
+        function BookingEventDetails({ details, ltext }) {
+        if (!details) {
+            return null;
+        }
+
+        const customer = details.customer || {};
+        const specialistName = details.specialist
+            ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
+            : '-';
+        const locationName = details.location
+            ? `${details.location.name || ''}${details.location.city ? ' (' + details.location.city + ')' : ''}`
+            : '-';
+        const serviceName = details.service ? details.service.name : '-';
+
+        return (
+            <div className="appBookingContainer">
+                <div className="appBookingEventHeader">
+                    <h2 className="appBookingTitle">{ltext.text('booking.title')}</h2>
+                    <p className="appBookingSubtitle">
+                        {ltext.text('booking.details.greeting')}
+                    </p>
+                </div>
+
+                <div className="appBookingEventBody">
+                    <div className="appBookingEventSection">
+                        <div className="appBookingSectionTitle">
+                            {ltext.text('booking.details.customer')}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('customer.name')}: {customer.name || '-'}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('customer.email')}: {customer.email || '-'}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('customer.mobile')}: {customer.mobile || '-'}
+                        </div>
+                    </div>
+
+                    <div className="appBookingEventSection">
+                        <div className="appBookingSectionTitle">
+                            {ltext.text('booking.details.appointment')}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('service.specialist')}: {specialistName}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('service.address')}: {locationName}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('service.duration')}: {details.duration} min
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('service.price')}: {/* nu avem preț în event, lăsăm gol sau '-' */}
+                            {'-'}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('booking.details.dateTime')}: {details.prettyDateTime}
+                        </div>
+                        <div className="appBookingAttributesLine">
+                            {ltext.text('step.slot.hour', details.timeStr)}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="appBookingEventActions">
+                    <button className="appBookingCtaButton">
+                        {ltext.text('cta.reschedule')}
+                    </button>
+                    <button className="appBookingCtaButton">
+                        {ltext.text('cta.cancel')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
 
     function getRawTextByKey(key) {
         if (props.configs && props.configs.text && props.configs.text[ltext.locale]) {
@@ -607,7 +748,50 @@ export function BookingPageInternalApp (props) {
         }
     }
 
-    function getMainContent() {
+        function getMainContent() {
+        // MODUL 1: ecran detalii programare, dacă avem eventId
+        if (props.eventId) {
+            // încă se fac requesturile
+            if (eventData.fetching || eventData.status === 'initial' || fetchData.fetching || fetchData.status === 'not_fetched') {
+                return <div>Loading booking details...</div>;
+            }
+
+            // eroare la unul dintre requesturi
+            if (eventData.status === 'error' || fetchData.status === 'error') {
+                return <div>Nu am putut încărca detaliile programării.</div>;
+            }
+
+            if (eventData.status === 'success' && fetchData.status === 'success') {
+                const baseDetails = buildEventDetails(eventData.data, fetchData.data);
+
+                if (!baseDetails) {
+                    return <div>Nu am găsit detaliile programării.</div>;
+                }
+
+                const startDateObj = new Date(baseDetails.startDate);
+                const languageForDate = baseDetails.language || ltext.locale;
+
+                const prettyDateTime = formatLocalizedDateTime(startDateObj, languageForDate);
+                const timeStr = format(startDateObj, "HH:mm");
+
+                const detailsWithFormatted = {
+                    ...baseDetails,
+                    prettyDateTime,
+                    timeStr
+                };
+
+                return (
+                    <BookingEventDetails
+                        details={detailsWithFormatted}
+                        ltext={ltext}
+                    />
+                );
+            }
+
+            return null;
+        }
+
+        // MODUL 2: flow-ul clasic de booking (fără eventId)
         if (fetchData.status !== 'success') {
             return;
         }
@@ -616,23 +800,23 @@ export function BookingPageInternalApp (props) {
         if (bookingData.step_choose_department && bookingData.step_choose_department.displayChooseDepartment) {
             steps.unshift('step_choose_department');
         }
-        
+
         return (
             <div className="appBookingContainer">
                 <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
             </div>
-        )
+        );
     }
 
-    return ( 
-        <React.StrictMode>
-            <div className="appBookingWidget"> 
-                { (fetchData.status === 'success') && getMainContent() } 
 
-                { (fetchData.status === 'no_integrationIdParam') && 
-                    (<div> Invalid config params </div> ) 
-                }
-            </div>
-        </React.StrictMode>  
-    );
-}
+   return (
+       <React.StrictMode>
+           <div className="appBookingWidget">
+               { getMainContent() }
+
+               { (fetchData.status === 'no_integrationIdParam') &&
+                   (<div> Invalid config params </div> )
+               }
+           </div>
+       </React.StrictMode>
+   );}

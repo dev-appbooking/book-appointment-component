@@ -111,12 +111,16 @@ $(document).ready( function() {
     //get the integrationId from the query params
     const urlParams = new URLSearchParams(window.location.search);
     const integrationId = urlParams.get('integrationId');
-    const locale = urlParams.get('locale');
+    const languageParam = urlParams.get('language');
+    const locale = languageParam || urlParams.get('locale');
+
+    const eventId = urlParams.get('eventId');
     
     const initConfigs = { 
                         integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         locale: locale,
+                        eventId: eventId,
                         configs: {
                                     step_personal_data: {
                                         mandatory_data: []
@@ -138,7 +142,7 @@ $(document).ready( function() {
                                 }
                         };
     const root = ReactDOM.createRoot($('#booking').get(0));
-    root.render(appBookingPublic.AppBookingPublic( initConfigs ));
+    root.render(React.createElement(appBookingPublic.AppBookingPublic, initConfigs));
 });
 </script>
 </html>
