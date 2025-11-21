@@ -42,7 +42,8 @@ export const localizationTexts = {
         'booking.details.appointment': 'Detalii programare',
         'booking.details.dateTime': 'Data și ora programării',
         'cta.reschedule': 'Reprogramează',
-        'cta.cancel': 'Anulează programarea'
+        'cta.cancel': 'Anulează programarea',
+        'loading.bookingDetails': 'Se încarcă detaliile programării...'
 
     },
 
@@ -89,7 +90,8 @@ export const localizationTexts = {
         'booking.details.appointment': 'Booking details',
         'booking.details.dateTime': 'Booking date and time',
         'cta.reschedule': 'Reschedule',
-        'cta.cancel': 'Cancel booking'
+        'cta.cancel': 'Cancel booking',
+        'loading.bookingDetails': 'Loading booking details...'
 
     }
 };

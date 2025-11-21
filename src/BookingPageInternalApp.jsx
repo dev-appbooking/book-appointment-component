@@ -11,6 +11,7 @@ import { FacetedFilter } from './FacetedFilter.jsx';
 import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
 import {formatLocalizedDateTime} from "./utils/formatters";
+import { BookingEventDetails } from "./BookingEventDetails.jsx";
 
 /*
 This booking Page can have several steps depending on what services are setup.
@@ -109,7 +110,21 @@ export function BookingPageInternalApp (props) {
                 );
                 setEventData({ fetching: false, status: 'success', data: bookingEvent });
             } catch (e) {
-                setEventData({ fetching: false, status: 'error', data: null });
+                const status = e?.status || e?.response?.status;
+
+                if (status === 404) {
+                    setEventData({
+                        fetching: false,
+                        status: 'not_found',
+                        data: null
+                    });
+                } else {
+                    setEventData({
+                        fetching: false,
+                        status: 'error',
+                        data: null
+                    });
+                }
             }
         })();
     }, [props.eventId, apiBase]);
@@ -397,82 +412,6 @@ export function BookingPageInternalApp (props) {
     }
 
 
-        function BookingEventDetails({ details, ltext }) {
-        if (!details) {
-            return null;
-        }
-
-        const customer = details.customer || {};
-        const specialistName = details.specialist
-            ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
-            : '-';
-        const locationName = details.location
-            ? `${details.location.name || ''}${details.location.city ? ' (' + details.location.city + ')' : ''}`
-            : '-';
-        const serviceName = details.service ? details.service.name : '-';
-
-        return (
-            <div className="appBookingContainer">
-                <div className="appBookingEventHeader">
-                    <h2 className="appBookingTitle">{ltext.text('booking.title')}</h2>
-                    <p className="appBookingSubtitle">
-                        {ltext.text('booking.details.greeting')}
-                    </p>
-                </div>
-
-                <div className="appBookingEventBody">
-                    <div className="appBookingEventSection">
-                        <div className="appBookingSectionTitle">
-                            {ltext.text('booking.details.customer')}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('customer.name')}: {customer.name || '-'}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('customer.email')}: {customer.email || '-'}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('customer.mobile')}: {customer.mobile || '-'}
-                        </div>
-                    </div>
-
-                    <div className="appBookingEventSection">
-                        <div className="appBookingSectionTitle">
-                            {ltext.text('booking.details.appointment')}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('service.specialist')}: {specialistName}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('service.address')}: {locationName}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('service.duration')}: {details.duration} min
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('service.price')}: {/* nu avem preț în event, lăsăm gol sau '-' */}
-                            {'-'}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('booking.details.dateTime')}: {details.prettyDateTime}
-                        </div>
-                        <div className="appBookingAttributesLine">
-                            {ltext.text('step.slot.hour', details.timeStr)}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="appBookingEventActions">
-                    <button className="appBookingCtaButton">
-                        {ltext.text('cta.reschedule')}
-                    </button>
-                    <button className="appBookingCtaButton">
-                        {ltext.text('cta.cancel')}
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
 
     function getRawTextByKey(key) {
@@ -749,17 +688,19 @@ export function BookingPageInternalApp (props) {
     }
 
         function getMainContent() {
-        // MODUL 1: ecran detalii programare, dacă avem eventId
         if (props.eventId) {
-            // încă se fac requesturile
             if (eventData.fetching || eventData.status === 'initial' || fetchData.fetching || fetchData.status === 'not_fetched') {
-                return <div>Loading booking details...</div>;
+                return <div>{ltext.text('loading.bookingDetails')}</div>;
             }
 
-            // eroare la unul dintre requesturi
-            if (eventData.status === 'error' || fetchData.status === 'error') {
-                return <div>Nu am putut încărca detaliile programării.</div>;
+            if (eventData.status === 'not_found') {
+                return <div>Programarea nu există sau a expirat.</div>;
             }
+
+            if (eventData.status === 'error' || fetchData.status === 'error') {
+                return <div>A apărut o eroare. Te rugăm să încerci mai târziu.</div>;
+            }
+
 
             if (eventData.status === 'success' && fetchData.status === 'success') {
                 const baseDetails = buildEventDetails(eventData.data, fetchData.data);
@@ -791,7 +732,6 @@ export function BookingPageInternalApp (props) {
             return null;
         }
 
-        // MODUL 2: flow-ul clasic de booking (fără eventId)
         if (fetchData.status !== 'success') {
             return;
         }
