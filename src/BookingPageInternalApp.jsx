@@ -11,6 +11,7 @@ import { FacetedFilter } from './FacetedFilter.jsx';
 import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
 import {formatLocalizedDateTime} from "./utils/formatters";
+import { BookingEventDetails } from "./BookingEventDetails.jsx";
 
 /*
 This booking Page can have several steps depending on what services are setup.
@@ -36,6 +37,8 @@ export function BookingPageInternalApp (props) {
                                                                   organizationId: null } );
 
     const [ bookingStatus, setBookingStatus] = useState({ submit: false, status: 'initial' });
+
+    const [eventData, setEventData] = useState({fetching: false, status: 'initial', data: null });
 
     let apiBase = 'https://www.appbooking.ro';
     if (props.appBookingApiBaseUrl) {
@@ -92,6 +95,40 @@ export function BookingPageInternalApp (props) {
             })();
         },
     [ ]);
+
+        useEffect(() => {
+        if (!props.eventId) {
+            return;
+        }
+
+        (async function () {
+            try {
+                setEventData({ fetching: true, status: 'not_fetched', data: null });
+                const bookingEvent = await httpRequest(
+                    'GET',
+                    apiBase + '/api/event/booking/' + props.eventId
+                );
+                setEventData({ fetching: false, status: 'success', data: bookingEvent });
+            } catch (e) {
+                const status = e?.status || e?.response?.status;
+
+                if (status === 404) {
+                    setEventData({
+                        fetching: false,
+                        status: 'not_found',
+                        data: null
+                    });
+                } else {
+                    setEventData({
+                        fetching: false,
+                        status: 'error',
+                        data: null
+                    });
+                }
+            }
+        })();
+    }, [props.eventId, apiBase]);
+
 
     function onSelectService(serviceItem, index) {
         setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceIndex: index, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
@@ -333,6 +370,49 @@ export function BookingPageInternalApp (props) {
         });
         return result;
     }
+
+
+        function buildEventDetails(event, skus) {
+        if (!event) {
+            return null;
+        }
+
+        const { customData, startDate, duration, specialistId, locationId, serviceSkuId, language } = event;
+
+        let service = null;
+        let specialist = null;
+        let location = null;
+
+        (skus || []).forEach(skuWrapper => {
+            if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
+
+            if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
+                service = skuWrapper.sku;
+
+                skuWrapper.data.forEach(itemData => {
+                    if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
+                        specialist = itemData.specialist;
+                    }
+                    if (itemData.location && String(itemData.location.id) === String(locationId)) {
+                        location = itemData.location;
+                    }
+                });
+            }
+        });
+
+        return {
+            customer: customData || {},
+            startDate,
+            duration,
+            language,
+            service,
+            specialist,
+            location
+        };
+    }
+
+
+
 
     function getRawTextByKey(key) {
         if (props.configs && props.configs.text && props.configs.text[ltext.locale]) {
@@ -607,7 +687,51 @@ export function BookingPageInternalApp (props) {
         }
     }
 
-    function getMainContent() {
+        function getMainContent() {
+        if (props.eventId) {
+            if (eventData.fetching || eventData.status === 'initial' || fetchData.fetching || fetchData.status === 'not_fetched') {
+                return <div>{ltext.text('loading.bookingDetails')}</div>;
+            }
+
+            if (eventData.status === 'not_found') {
+                return <div>Programarea nu există sau a expirat.</div>;
+            }
+
+            if (eventData.status === 'error' || fetchData.status === 'error') {
+                return <div>A apărut o eroare. Te rugăm să încerci mai târziu.</div>;
+            }
+
+
+            if (eventData.status === 'success' && fetchData.status === 'success') {
+                const baseDetails = buildEventDetails(eventData.data, fetchData.data);
+
+                if (!baseDetails) {
+                    return <div>Nu am găsit detaliile programării.</div>;
+                }
+
+                const startDateObj = new Date(baseDetails.startDate);
+                const languageForDate = baseDetails.language || ltext.locale;
+
+                const prettyDateTime = formatLocalizedDateTime(startDateObj, languageForDate);
+                const timeStr = format(startDateObj, "HH:mm");
+
+                const detailsWithFormatted = {
+                    ...baseDetails,
+                    prettyDateTime,
+                    timeStr
+                };
+
+                return (
+                    <BookingEventDetails
+                        details={detailsWithFormatted}
+                        ltext={ltext}
+                    />
+                );
+            }
+
+            return null;
+        }
+
         if (fetchData.status !== 'success') {
             return;
         }
@@ -616,23 +740,23 @@ export function BookingPageInternalApp (props) {
         if (bookingData.step_choose_department && bookingData.step_choose_department.displayChooseDepartment) {
             steps.unshift('step_choose_department');
         }
-        
+
         return (
             <div className="appBookingContainer">
                 <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
             </div>
-        )
+        );
     }
 
-    return ( 
-        <React.StrictMode>
-            <div className="appBookingWidget"> 
-                { (fetchData.status === 'success') && getMainContent() } 
 
-                { (fetchData.status === 'no_integrationIdParam') && 
-                    (<div> Invalid config params </div> ) 
-                }
-            </div>
-        </React.StrictMode>  
-    );
-}
+   return (
+       <React.StrictMode>
+           <div className="appBookingWidget">
+               { getMainContent() }
+
+               { (fetchData.status === 'no_integrationIdParam') &&
+                   (<div> Invalid config params </div> )
+               }
+           </div>
+       </React.StrictMode>
+   );}

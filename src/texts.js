@@ -36,7 +36,15 @@ export const localizationTexts = {
         'error.name_invalid': 'Numele poate conține doar litere și cifre, fără diacritice.',
         'error.mobile_invalid': 'Număr de telefon invalid.',
         'error.email_invalid': 'Formatul adresei de email este invalid.',
-        'error.generic': 'A apărut o eroare neașteptată. Te rugăm să încerci mai târziu.'
+        'error.generic': 'A apărut o eroare neașteptată. Te rugăm să încerci mai târziu.',
+        'booking.details.greeting': 'Salut, vezi detaliile programării tale.',
+        'booking.details.customer': 'Datele tale',
+        'booking.details.appointment': 'Detalii programare',
+        'booking.details.dateTime': 'Data și ora programării',
+        'cta.reschedule': 'Reprogramează',
+        'cta.cancel': 'Anulează programarea',
+        'loading.bookingDetails': 'Se încarcă detaliile programării...'
+
     },
 
     'en': {
@@ -76,6 +84,14 @@ export const localizationTexts = {
         'error.name_invalid': 'The name may contain only letters and numbers, without diacritics.',
         'error.mobile_invalid': 'Invalid phone number.',
         'error.email_invalid': 'Invalid email format.',
-        'error.generic': 'Unexpected error, please try again later.'
+        'error.generic': 'Unexpected error, please try again later.',
+        'booking.details.greeting': 'Hi, here are your booking details.',
+        'booking.details.customer': 'Your details',
+        'booking.details.appointment': 'Booking details',
+        'booking.details.dateTime': 'Booking date and time',
+        'cta.reschedule': 'Reschedule',
+        'cta.cancel': 'Cancel booking',
+        'loading.bookingDetails': 'Loading booking details...'
+
     }
 };
