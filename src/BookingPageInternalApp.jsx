@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import { StepSummary } from './StepSummary.jsx';
 import {formatLocalizedDateTime} from "./utils/formatters";
 import { BookingEventDetails } from "./BookingEventDetails.jsx";
+import { RescheduleBooking } from './RescheduleBooking.jsx';
+
 
 /*
 This booking Page can have several steps depending on what services are setup.
@@ -39,6 +41,9 @@ export function BookingPageInternalApp (props) {
     const [ bookingStatus, setBookingStatus] = useState({ submit: false, status: 'initial' });
 
     const [eventData, setEventData] = useState({fetching: false, status: 'initial', data: null });
+
+    const [eventMode, setEventMode] = useState('view');
+
 
     let apiBase = 'https://www.appbooking.ro';
     if (props.appBookingApiBaseUrl) {
@@ -373,43 +378,85 @@ export function BookingPageInternalApp (props) {
 
 
         function buildEventDetails(event, skus) {
-        if (!event) {
-            return null;
-        }
-
-        const { customData, startDate, duration, specialistId, locationId, serviceSkuId, language } = event;
-
-        let service = null;
-        let specialist = null;
-        let location = null;
-
-        (skus || []).forEach(skuWrapper => {
-            if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
-
-            if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
-                service = skuWrapper.sku;
-
-                skuWrapper.data.forEach(itemData => {
-                    if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
-                        specialist = itemData.specialist;
-                    }
-                    if (itemData.location && String(itemData.location.id) === String(locationId)) {
-                        location = itemData.location;
-                    }
-                });
-            }
-        });
-
-        return {
-            customer: customData || {},
-            startDate,
-            duration,
-            language,
-            service,
-            specialist,
-            location
-        };
+    if (!event) {
+        return null;
     }
+
+    const {
+        id: eventId,
+        integrationId,
+        customData,
+        startDate,
+        duration,
+        specialistId,
+        locationId,
+        serviceSkuId,
+        language
+    } = event;
+
+    let service = null;
+    let specialist = null;
+    let location = null;
+
+    (skus || []).forEach(skuWrapper => {
+        if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
+
+        if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
+            service = skuWrapper.sku;
+
+            skuWrapper.data.forEach(itemData => {
+                if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
+                    specialist = itemData.specialist;
+                }
+                if (itemData.location && String(itemData.location.id) === String(locationId)) {
+                    location = itemData.location;
+                }
+            });
+        }
+    });
+
+    return {
+        eventId,
+        integrationId,
+        serviceSkuId,
+        specialistId,
+        locationId,
+        customer: customData || {},
+        startDate,
+        duration,
+        language,
+        service,
+        specialist,
+        location
+    };
+}
+
+
+    function onClickReschedule() {
+        setEventMode('reschedule');
+    }
+
+    async function onClickCancel() {
+        if (!props.eventId) return;
+
+        const ok = window.confirm(ltext.text('cancel.confirm'));
+        if (!ok) return;
+
+        try {
+            await httpRequest(
+                'POST',
+                apiBase + '/api/appointment/publicCancelAppointment',
+                { eventId: props.eventId },
+                { 'content-type': 'application/json' }
+            );
+            alert(ltext.text('cancel.success'));
+        } catch (e) {
+            console.error(e);
+            alert(ltext.text('cancel.error'));
+        }
+    }
+
+
 
 
 
@@ -592,17 +639,17 @@ export function BookingPageInternalApp (props) {
     function getSubmitBookingBtnStatus() {
         //take into consideration if name, email and mobile are mandatory
         return ( (bookingData.step_personal_data.name.length > 0) || (! mandatoryPersonalData.includes('name')) ) &&
-                ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) && 
-                ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) && 
+                ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) &&
+                ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) &&
                 ((bookingData.step_personal_data.acceptTerms === true) &&
                 (Object.keys(bookingData.step_personal_data.errors).length === 0) && ! bookingStatus.submit );
     }
 
     function contentForStep_personalData(stepIndex) {
         if (bookingData.step === 'step_personal_data') {
-            return ( 
+            return (
                 <div>
-                        <div className="appBookingActiveStepTitle"> 
+                        <div className="appBookingActiveStepTitle">
                             { ltext.text('step.personalInfo', stepIndex + 1) } 
                         </div>
                         < StandardCustomerForm customerData={bookingData.step_personal_data} onChange={onChangeCustomerData} 
@@ -687,33 +734,37 @@ export function BookingPageInternalApp (props) {
         }
     }
 
-        function getMainContent() {
+    function getMainContent() {
         if (props.eventId) {
-            if (eventData.fetching || eventData.status === 'initial' || fetchData.fetching || fetchData.status === 'not_fetched') {
-                return <div>{ltext.text('loading.bookingDetails')}</div>;
+            if (
+                eventData.fetching ||
+                eventData.status === 'initial' ||
+                fetchData.fetching ||
+                fetchData.status === 'not_fetched'
+            ) {
+                return <div>{ltext.text('booking.details.loading')}</div>;
             }
 
             if (eventData.status === 'not_found') {
-                return <div>Programarea nu există sau a expirat.</div>;
+                return <div>{ltext.text('booking.details.notFound')}</div>;
             }
 
             if (eventData.status === 'error' || fetchData.status === 'error') {
-                return <div>A apărut o eroare. Te rugăm să încerci mai târziu.</div>;
+                return <div>{ltext.text('booking.details.error')}</div>;
             }
-
 
             if (eventData.status === 'success' && fetchData.status === 'success') {
                 const baseDetails = buildEventDetails(eventData.data, fetchData.data);
 
                 if (!baseDetails) {
-                    return <div>Nu am găsit detaliile programării.</div>;
+                    return <div>{ltext.text('booking.details.notFound')}</div>;
                 }
 
                 const startDateObj = new Date(baseDetails.startDate);
                 const languageForDate = baseDetails.language || ltext.locale;
 
                 const prettyDateTime = formatLocalizedDateTime(startDateObj, languageForDate);
-                const timeStr = format(startDateObj, "HH:mm");
+                const timeStr = format(startDateObj, 'HH:mm');
 
                 const detailsWithFormatted = {
                     ...baseDetails,
@@ -721,16 +772,34 @@ export function BookingPageInternalApp (props) {
                     timeStr
                 };
 
-                return (
-                    <BookingEventDetails
-                        details={detailsWithFormatted}
-                        ltext={ltext}
-                    />
-                );
+                if (eventMode === 'view') {
+                    return (
+                        <BookingEventDetails
+                            details={detailsWithFormatted}
+                            ltext={ltext}
+                            onReschedule={onClickReschedule}
+                            onCancel={onClickCancel}
+                        />
+                    );
+                }
+
+                if (eventMode === 'reschedule') {
+                    return (
+                        <RescheduleBooking
+                            apiBase={apiBase}
+                            eventDetails={detailsWithFormatted}
+                            organizationId={bookingData.organizationId}
+                            ltext={ltext}
+                            getRawTextByKey={getRawTextByKey}
+                            configs={props.configs}
+                        />
+                    );
+                }
             }
 
             return null;
         }
+
 
         if (fetchData.status !== 'success') {
             return;
