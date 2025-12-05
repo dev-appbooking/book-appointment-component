@@ -46,16 +46,18 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
             setRescheduleStatus(prev => ({ ...prev, submit: true, status: 'not_created' }));
 
             const bodyReq = {
-                eventId: eventDetails.eventId,
-                newScheduleId: rescheduleData.selectedSlot.slot.scheduleId,
-                newBookingDate: rescheduleData.selectedSlot.slot.startDate,
+                integrationId: eventDetails.integrationId,
+                serviceSkuId: eventDetails.serviceSkuId,
+                specialistId: eventDetails.specialistId,
+                scheduleId: rescheduleData.selectedSlot.slot.scheduleId,
+                bookingDate: rescheduleData.selectedSlot.slot.startDate,
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
             };
 
 
             const res = await httpRequest(
                 'POST',
-                apiBase + '/api/appointment/publicRescheduleAppointment',
+                apiBase + `/api/event/booking/${eventDetails.id}/reschedule`,
                 bodyReq,
                 { 'content-type': 'application/json' }
             );

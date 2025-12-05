@@ -113,7 +113,7 @@ export function BookingPageInternalApp (props) {
                     'GET',
                     apiBase + '/api/event/booking/' + props.eventId
                 );
-                setEventData({ fetching: false, status: 'success', data: bookingEvent });
+                setEventData({ fetching: false, status: 'success', data: { ...bookingEvent, id: props.eventId } });
             } catch (e) {
                 const status = e?.status || e?.response?.status;
 
@@ -383,8 +383,7 @@ export function BookingPageInternalApp (props) {
     }
 
     const {
-        id: eventId,
-        integrationId,
+        id,
         customData,
         startDate,
         duration,
@@ -393,7 +392,7 @@ export function BookingPageInternalApp (props) {
         serviceSkuId,
         language
     } = event;
-
+    let integrationId = props.integrationId;
     let service = null;
     let specialist = null;
     let location = null;
@@ -416,7 +415,7 @@ export function BookingPageInternalApp (props) {
     });
 
     return {
-        eventId,
+        id,
         integrationId,
         serviceSkuId,
         specialistId,
@@ -445,13 +444,12 @@ export function BookingPageInternalApp (props) {
         try {
             await httpRequest(
                 'POST',
-                apiBase + '/api/appointment/publicCancelAppointment',
-                { eventId: props.eventId },
+                apiBase + `/api/event/booking/${props.eventId}/cancel`,
+                { },
                 { 'content-type': 'application/json' }
             );
             alert(ltext.text('cancel.success'));
         } catch (e) {
-            console.error(e);
             alert(ltext.text('cancel.error'));
         }
     }
