@@ -43,7 +43,25 @@ export const localizationTexts = {
         'booking.details.dateTime': 'Data și ora programării',
         'cta.reschedule': 'Reprogramează',
         'cta.cancel': 'Anulează programarea',
-        'loading.bookingDetails': 'Se încarcă detaliile programării...'
+        'loading.bookingDetails': 'Se încarcă detaliile programării...',
+        'booking.details.loading': 'Se încarcă detaliile programării...',
+        'booking.details.error': 'Nu am putut încărca detaliile programării.',
+        'booking.details.notFound': 'Programarea nu mai există sau a expirat.',
+
+        'reschedule.step.current': 'Pasul {0}. Programarea curentă',
+        'reschedule.step.newSlot': 'Pasul {0}. Alege noua dată și oră',
+        'reschedule.step.newSlot.done': 'Pasul {0}. Noua dată și oră',
+        'reschedule.step.confirmation': 'Pasul {0}. Confirmarea reprogramării',
+        'reschedule.cta': 'Reprogramează',
+        'reschedule.terms': 'Am citit și sunt de acord cu termenii și condițiile pentru reprogramare.',
+        'reschedule.success': 'Reprogramarea a fost creată cu succes.',
+        'reschedule.ref': 'Număr confirmare',
+        'reschedule.error': 'Nu s-a putut reprograma. Te rugăm să încerci din nou.',
+
+        'cancel.confirm': 'Ești sigur că vrei să anulezi programarea?',
+        'cancel.success': 'Programarea a fost anulată cu succes.',
+        'cancel.error': 'Nu am putut anula programarea. Te rugăm să încerci din nou.'
+
 
     },
 
@@ -91,7 +109,25 @@ export const localizationTexts = {
         'booking.details.dateTime': 'Booking date and time',
         'cta.reschedule': 'Reschedule',
         'cta.cancel': 'Cancel booking',
-        'loading.bookingDetails': 'Loading booking details...'
+        'loading.bookingDetails': 'Loading booking details...',
+        'booking.details.loading': 'Loading booking details...',
+        'booking.details.error': 'Could not load booking details.',
+        'booking.details.notFound': 'Booking does not exist or has expired.',
+
+        'reschedule.step.current': 'Step {0}. Current booking',
+        'reschedule.step.newSlot': 'Step {0}. Choose new date and time',
+        'reschedule.step.newSlot.done': 'Step {0}. New date and time',
+        'reschedule.step.confirmation': 'Step {0}. Reschedule confirmation',
+        'reschedule.cta': 'Reschedule',
+        'reschedule.terms': 'I have read and agree with the terms and conditions for rescheduling.',
+        'reschedule.success': 'Reschedule was created successfully.',
+        'reschedule.ref': 'Confirmation number',
+        'reschedule.error': 'Could not reschedule. Please try again.',
+
+        'cancel.confirm': 'Are you sure you want to cancel this booking?',
+        'cancel.success': 'The booking was cancelled successfully.',
+        'cancel.error': 'We could not cancel the booking. Please try again.'
+
 
     }
 };
