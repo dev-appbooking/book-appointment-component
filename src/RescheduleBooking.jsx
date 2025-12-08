@@ -7,7 +7,7 @@ import { httpRequest } from './HttpRequest';
 import { format } from 'date-fns';
 import { formatLocalizedDateTime } from './utils/formatters';
 
-export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, configs }) {
+export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, appBookingConfigs }) {
     const [rescheduleData, setRescheduleData] = useState({
         step: 'reschedule_choose_slot',
         selectedSlot: null,
@@ -27,6 +27,10 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     function onToggleTerms(e) {
         const checked = e.target.checked;
         setRescheduleData(prev => ({ ...prev, acceptTerms: checked }));
+    }
+
+    function onBlurTerms(e) {
+
     }
 
     function canSubmit() {
@@ -116,6 +120,21 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         );
     }
 
+    function getTermsCheckboxLabelContent() {
+        let rawTermsText = getRawTextByKey('customer.acceptTerms');
+        if (appBookingConfigs && appBookingConfigs.termsAndConditions) {
+            let linksArray = appBookingConfigs.termsAndConditions.links;
+            if (linksArray && Array.isArray(linksArray)) {
+                //split the rawTermsText to tokens delimited by {0}, {1}, {2}, {3}...
+                let strTokens = rawTermsText.split(/\{[0-9]*\}/);
+                return ( strTokens.map( (token, index) => {
+                    return ( <> {token} { (index < linksArray.length ) && (<a href={linksArray[index].link} target="_new_blank"> { getRawTextByKey(linksArray[index].label_key) }</a>)}&nbsp; </> )
+                } ) )
+            }
+        }
+        return (<span> { rawTermsText } </span>);
+    } 
+
     function contentForStep_newSlot(stepIndex) {
         // step activ: alegere slot + checkbox + buton
         if (rescheduleData.step === 'reschedule_choose_slot') {
@@ -123,7 +142,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
             return (
                 <div>
-                    <div className="appBookingActiveStepTitle">{title}</div>
+                    <div className="appBookingStepTitle appBookingActiveStepTitle">{title}</div>
                     <PublicNextAppSlot
                         apiBase={apiBase}
                         skuId={eventDetails.service ? eventDetails.service.id : eventDetails.serviceSkuId}
@@ -139,14 +158,18 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                     />
 
                     <div className="appBookingTermsContainer">
-                        <label className="appBookingCheckboxLabel">
-                            <input
-                                type="checkbox"
-                                checked={rescheduleData.acceptTerms}
-                                onChange={onToggleTerms}
-                            />
-                            <span>{ltext.text('reschedule.terms')}</span>
-                        </label>
+                        <fieldset className="appBookingFormFieldSet">
+                            <div className="appBookingFormFieldSetLine">
+                                <input type="checkbox" checked={rescheduleData.acceptTerms} name="acceptTerms" className="appBookingFormInputCheckbox"
+                                    onChange={ onToggleTerms }
+                                    onBlur={ onBlurTerms }
+                                /> 
+                                <label class="appBookingFormTermsLabel" htmlFor="acceptTerms">
+                                { getTermsCheckboxLabelContent() } 
+                                </label>
+                            </div>
+                        </fieldset>
+
                     </div>
 
                     {rescheduleStatus.status === 'error' && (
@@ -257,13 +280,11 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     const steps = ['reschedule_current', 'reschedule_choose_slot', 'reschedule_confirmation'];
 
     return (
-        <div className="appBookingContainer">
-            <BookingSummary
-                contentForStep={contentForStep}
-                steps={steps}
-                ltext={ltext}
-                configs={configs}
-            />
-        </div>
+        <BookingSummary
+            contentForStep={contentForStep}
+            steps={steps}
+            ltext={ltext}
+            appBookingConfigs={appBookingConfigs}
+        />
     );
 }

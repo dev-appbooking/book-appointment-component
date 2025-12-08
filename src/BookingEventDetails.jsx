@@ -1,6 +1,8 @@
-import * as React from 'react';
+import { HorizontalBar } from './HorizontalBar.jsx';
+import { StepSummary } from './StepSummary.jsx';
+import { ClockIcon, LocationIcon, CalendarIcon } from './utils/Utils.js';
 
-export function BookingEventDetails({ details, ltext, onReschedule, onCancel }) {
+export function BookingEventDetails({ details, ltext, onReschedule, onCancel, getRawTextByKey }) {
     if (!details) {
         return null;
     }
@@ -15,19 +17,50 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel }) 
     const serviceName = details.service ? details.service.name : '-';
 
     return (
-        <div className="appBookingContainer">
-            <div className="appBookingEventHeader">
-                <h2 className="appBookingTitle">{ltext.text('booking.title')}</h2>
-                <p className="appBookingSubtitle">
-                    {ltext.text('booking.details.greeting')}
-                </p>
+        <>
+            <div className="appBookingTitle"> { getRawTextByKey('booking.details.title')} </div>
+            
+            <HorizontalBar />
+
+            <div className="appBookingStepContainer">
+                <StepSummary title={ getRawTextByKey('booking.details.dateTime') } showEdit={false} ltext={ltext}>
+                    <div className="appBokingServiceLineItem"> 
+                        <div className="appBookingServiceAttr">
+                            <div className="appBookingServiceAttrIcon">
+                                <CalendarIcon />
+                            </div>
+                            <div className="appBookingServiceAttrContent">
+                                    {details.prettyDateTime}
+                            </div>
+                        </div>
+                    </div>    
+                    <div className="appBokingServiceLineItem">
+                        <div className="appBookingServiceAttr"></div>
+                            <div className="appBookingServiceAttrIcon">
+                                <ClockIcon />
+                            </div>
+                            <div className="appBookingServiceAttrContent">
+                                { details.timeStr }
+                            </div>
+                    </div>
+                </StepSummary>
             </div>
 
-            <div className="appBookingEventBody">
-                <div className="appBookingEventSection">
-                    <div className="appBookingSectionTitle">
-                        {ltext.text('booking.details.customer')}
-                    </div>
+            <HorizontalBar />
+
+            <div className="appBookingStepContainer">
+                <StepSummary title={ getRawTextByKey('booking.details.status') } showEdit={false} ltext={ltext}>
+                    <div className="appBokingServiceLineItem"> 
+                        { getRawTextByKey(`booking.status.${details.status}`) } 
+                    </div>    
+                    
+                </StepSummary>
+            </div>
+
+            <HorizontalBar />
+
+            <div className="appBookingStepContainer">
+                <StepSummary title={ getRawTextByKey('booking.details.personal') } showEdit={false} ltext={ltext}>
                     <div className="appBookingAttributesLine">
                         {ltext.text('customer.name')}: {customer.name || '-'}
                     </div>
@@ -36,46 +69,54 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel }) 
                     </div>
                     <div className="appBookingAttributesLine">
                         {ltext.text('customer.mobile')}: {customer.mobile || '-'}
-                    </div>
-                </div>
-
-                <div className="appBookingEventSection">
-                    <div className="appBookingSectionTitle">
-                        {ltext.text('booking.details.appointment')}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('service.specialist')}: {specialistName}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('service.address')}: {locationName}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('service.duration')}: {details.duration} min
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('service.price')}: {'-'}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('booking.details.dateTime')}: {details.prettyDateTime}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.textValue(ltext.text('step.slot.hour'), details.timeStr)}
-                    </div>
-                </div>
+                    </div>         
+                </StepSummary>
             </div>
 
-            <div className="appBookingEventActions">
+            <HorizontalBar />
+
+            <div className="appBookingStepContainer">
+                <StepSummary title={ getRawTextByKey('booking.details.event') } showEdit={false} ltext={ltext}>
+                    <div className="appBokingServiceLineItem"> 
+                        { serviceName }
+                    </div>
+
+                    <div className="appBokingServiceLineItem"> 
+                        { specialistName }
+                    </div>
+                    
+                    <div className="appBokingServiceLineItem">
+                        <div className="appBookingServiceAttr">
+                            { details.duration } minute
+                        </div>
+
+                        <div className="appBookingServiceAttr">
+                            <div className="appBookingServiceAttrIcon">
+                                <LocationIcon />
+                            </div>
+                            <div className="appBookingServiceAttrContent">
+                                { locationName }
+                            </div>
+                        </div>
+                    </div>
+
+                </StepSummary>
+            </div>
+
+            <HorizontalBar />
+
+            <div className="appBookingCtaContainer">
                 {onReschedule && (
                     <button className="appBookingCtaButton" onClick={onReschedule}>
                         {ltext.text('cta.reschedule')}
                     </button>
                 )}
-                {onCancel && (
-                    <button className="appBookingCtaButton" onClick={onCancel}>
+                {(onCancel && (details.status !== 'canceled')) && (
+                    <button className="appBookingCtaButton appBookingCtaButtonDanger" onClick={onCancel}>
                         {ltext.text('cta.cancel')}
                     </button>
                 )}
             </div>
-        </div>
+        </>
     );
 }

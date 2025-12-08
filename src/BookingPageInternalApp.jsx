@@ -13,8 +13,9 @@ import { StepSummary } from './StepSummary.jsx';
 import {formatLocalizedDateTime} from "./utils/formatters";
 import { BookingEventDetails } from "./BookingEventDetails.jsx";
 import { RescheduleBooking } from './RescheduleBooking.jsx';
-
-
+import { configurableText } from './utils/Utils.js';
+import { ClockIcon } from './utils/Utils.js';
+import { LocationIcon } from './utils/Utils.js';
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -42,7 +43,7 @@ export function BookingPageInternalApp (props) {
 
     const [eventData, setEventData] = useState({fetching: false, status: 'initial', data: null });
 
-    const [eventMode, setEventMode] = useState('view');
+    const [eventMode, setEventMode] = useState( props.eventId ? 'view': 'standard');
 
 
     let apiBase = 'https://www.appbooking.ro';
@@ -172,9 +173,7 @@ export function BookingPageInternalApp (props) {
                     <div className="appBokingServiceLineItem">
                         <div className="appBookingServiceAttr">
                             <div className="appBookingServiceAttrIcon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" strokeWidth="1.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                </svg>
+                                <ClockIcon />
                             </div>
                             <div className="appBookingServiceAttrContent">
                                     { item.sku.duration } minute
@@ -184,10 +183,7 @@ export function BookingPageInternalApp (props) {
 
                         <div className="appBookingServiceAttr">
                             <div className="appBookingServiceAttrIcon">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"  stroke="currentColor" strokeWidth="1.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                </svg>
+                                <LocationIcon />
                             </div>
                             <div className="appBookingServiceAttrContent">
                                 { item.location.name }
@@ -377,61 +373,67 @@ export function BookingPageInternalApp (props) {
     }
 
 
-        function buildEventDetails(event, skus) {
-    if (!event) {
-        return null;
-    }
-
-    const {
-        id,
-        customData,
-        startDate,
-        duration,
-        specialistId,
-        locationId,
-        serviceSkuId,
-        language
-    } = event;
-    let integrationId = props.integrationId;
-    let service = null;
-    let specialist = null;
-    let location = null;
-
-    (skus || []).forEach(skuWrapper => {
-        if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
-
-        if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
-            service = skuWrapper.sku;
-
-            skuWrapper.data.forEach(itemData => {
-                if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
-                    specialist = itemData.specialist;
-                }
-                if (itemData.location && String(itemData.location.id) === String(locationId)) {
-                    location = itemData.location;
-                }
-            });
+    function buildEventDetails(event, skus) {
+        if (!event) {
+            return null;
         }
-    });
 
-    return {
-        id,
-        integrationId,
-        serviceSkuId,
-        specialistId,
-        locationId,
-        customer: customData || {},
-        startDate,
-        duration,
-        language,
-        service,
-        specialist,
-        location
-    };
-}
+        const {
+            id,
+            customData,
+            startDate,
+            duration,
+            specialistId,
+            locationId,
+            serviceSkuId,
+            language,
+            status
+        } = event;
+        let integrationId = props.integrationId;
+        let service = null;
+        let specialist = null;
+        let location = null;
+
+        (skus || []).forEach(skuWrapper => {
+            if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
+
+            if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
+                service = skuWrapper.sku;
+
+                skuWrapper.data.forEach(itemData => {
+                    if (itemData.specialist && String(itemData.specialist.id) === String(specialistId)) {
+                        specialist = itemData.specialist;
+                    }
+                    if (itemData.location && String(itemData.location.id) === String(locationId)) {
+                        location = itemData.location;
+                    }
+                });
+            }
+        });
+
+        return {
+            id,
+            integrationId,
+            serviceSkuId,
+            specialistId,
+            locationId,
+            customer: customData || {},
+            startDate,
+            duration,
+            language,
+            service,
+            specialist,
+            location,
+            status
+        };
+    }
 
 
     function onClickReschedule() {
+        if (eventData.data && eventData.data.status === 'canceled') {
+            setEventMode('standard');    
+            return;
+        }
         setEventMode('reschedule');
     }
 
@@ -454,19 +456,8 @@ export function BookingPageInternalApp (props) {
         }
     }
 
-
-
-
-
-
     function getRawTextByKey(key) {
-        if (props.configs && props.configs.text && props.configs.text[ltext.locale]) {
-            // we have the texts for the current locale, check if we have the mentioned key
-            if (key in props.configs.text[ltext.locale]) {
-                return props.configs.text[ltext.locale][key];
-            }
-        }
-        return ltext.text(key);
+        return configurableText(key, props.configs, ltext);
     }
 
     function contentForStep_category(stepIndex) {
@@ -493,7 +484,7 @@ export function BookingPageInternalApp (props) {
 
         if (bookingData.step === 'step_choose_department') {
             return (<>
-                        <div className="appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.department'), stepIndex + 1 ) } </div>
+                        <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.department'), stepIndex + 1 ) } </div>
                         <CustomList
                         items={ allDepartmentsData } onSelectItem={onSelectDepartment}
                         selectedIndex={bookingData.step_choose_department.departmentIndex}
@@ -576,7 +567,7 @@ export function BookingPageInternalApp (props) {
                                 } ;
             return (
             <div>
-                <div className="appBookingActiveStepTitle"> { ltext.text('step.service', stepIndex + 1) } </div>
+                <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.service'), stepIndex + 1) } </div>
                     { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
                     <CustomList
                         items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService}
@@ -587,13 +578,13 @@ export function BookingPageInternalApp (props) {
             </div>
             )
         } else if ((bookingData.step !== 'step_choose_service') && selectedService) {
-            let title = ltext.text('step.service.done', stepIndex + 1);
+            let title = ltext.textValue(getRawTextByKey('step.service.done'), stepIndex + 1);
             return (<StepSummary title={title} onEdit={onEditStepChooseService} showEdit={bookingData.step_choose_service.showEdit} ltext={ltext}>
                         { serviceItemContent(selectedService) }
                     </StepSummary>)
         }  else {
             return (
-                    <div className="appBookingStepTitle"> { ltext.text('step.service', stepIndex + 1) } </div>
+                    <div className="appBookingStepTitle"> { ltext.textValue(getRawTextByKey('step.service'), stepIndex + 1) } </div>
                     )
         }
     }
@@ -602,7 +593,7 @@ export function BookingPageInternalApp (props) {
         if ((bookingData.step === 'step_choose_slot') && bookingData.step_choose_service.skuId) {
             return (
                 <div>
-                    <div className="appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
+                    <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
                     <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
                                         specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
                                         maxDaysToShow={3}
@@ -647,7 +638,7 @@ export function BookingPageInternalApp (props) {
         if (bookingData.step === 'step_personal_data') {
             return (
                 <div>
-                        <div className="appBookingActiveStepTitle">
+                        <div className="appBookingStepTitle appBookingActiveStepTitle">
                             { ltext.text('step.personalInfo', stepIndex + 1) } 
                         </div>
                         < StandardCustomerForm customerData={bookingData.step_personal_data} onChange={onChangeCustomerData} 
@@ -733,7 +724,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function getMainContent() {
-        if (props.eventId) {
+        if (eventMode !== 'standard') {
             if (
                 eventData.fetching ||
                 eventData.status === 'initial' ||
@@ -772,25 +763,30 @@ export function BookingPageInternalApp (props) {
 
                 if (eventMode === 'view') {
                     return (
-                        <BookingEventDetails
-                            details={detailsWithFormatted}
-                            ltext={ltext}
-                            onReschedule={onClickReschedule}
-                            onCancel={onClickCancel}
-                        />
+                        <div className="appBookingContainer">
+                            <BookingEventDetails
+                                details={detailsWithFormatted}
+                                ltext={ltext}
+                                onReschedule={onClickReschedule}
+                                onCancel={onClickCancel}
+                                getRawTextByKey={getRawTextByKey}
+                            />
+                        </div>
                     );
                 }
 
                 if (eventMode === 'reschedule') {
                     return (
-                        <RescheduleBooking
-                            apiBase={apiBase}
-                            eventDetails={detailsWithFormatted}
-                            organizationId={bookingData.organizationId}
-                            ltext={ltext}
-                            getRawTextByKey={getRawTextByKey}
-                            configs={props.configs}
-                        />
+                        <div className="appBookingContainer">
+                            <RescheduleBooking
+                                apiBase={apiBase}
+                                eventDetails={detailsWithFormatted}
+                                organizationId={bookingData.organizationId}
+                                ltext={ltext}
+                                getRawTextByKey={getRawTextByKey}
+                                appBookingConfigs={props.configs}
+                            />
+                        </div>
                     );
                 }
             }
