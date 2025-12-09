@@ -69,7 +69,6 @@
 .appBookingStepSummaryContainer {
     display: flex;
     flex-direction: column;
-    margin-top: 8px;
     width: 100%;
     align-items: center;
 }
@@ -77,6 +76,8 @@
 .appBookingStepTitle {
     flex-grow: 1;
     width: 100%;
+    color: #5b5b5b;
+    padding-bottom: 8px;
 }
 
 .appBookingStepContent {
@@ -209,6 +210,11 @@
     color: #D32F2F;
     font-size: 0.85em;
 }
+.appBokingErrorIcon {
+    width: 32px;
+    height: 32px;
+    margin: 8px;
+}
 .appBookingErrorText {
     color: #D32F2F;
 }
@@ -229,7 +235,11 @@
 
 .appBookingCtaContainer {
     margin: 16px 0;
+    display: flex;
+    gap: 8px;
+
 }
+
 .appBookingCtaButton {
     padding: 8px 16px;
     border-radius: 4px;
@@ -241,14 +251,37 @@
     font-size: 1em;
 }
 
-.appBookingCtaButton:not([disabled]), .appBookingCtaButton:hover:not([disabled])
+.appBookingCtaButton:not([disabled])
  {
     background-color: #00695f;
     color: #fff;
 }
 
+.appBookingCtaButton:hover:not([disabled])
+ {
+    background-color: #035d54;
+    color: #fff;
+}
+
+.appBookingCtaButtonDanger:not([disabled]) {
+    background-color: #981b1b;
+}
+
+.appBookingCtaButtonDanger:hover:not([disabled])
+ {
+    background-color: #841a1a;
+}
+
 .appBookingAttributesLine {
     margin-bottom: 4px;
+}
+
+.appBookingTextStrike {
+   text-decoration: line-through;
+}
+
+.appBookingTextNotImportant {
+    color: #99a1af;
 }
 
 /* Extra small devices (phones, 600px and down) */
@@ -271,6 +304,7 @@
     }
     .appBookingStepTitle {
         width: 40%;
+        padding-bottom: 0px;
     }
     .appBookingStepContent {
         width: 60%;
