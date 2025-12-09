@@ -16,6 +16,7 @@ import { RescheduleBooking } from './RescheduleBooking.jsx';
 import { configurableText } from './utils/Utils.js';
 import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
+import { XCircle } from './utils/Utils.js';
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -723,6 +724,13 @@ export function BookingPageInternalApp (props) {
         }
     }
 
+    function errorContent(keyText) {
+        return ( <div className="appBookingErrorText appBookingFormFieldSetLine"> 
+            <div class="appBokingErrorIcon"> <XCircle /> </div>
+            <div> { getRawTextByKey(keyText) } </div>
+        </div> );
+    }
+
     function getMainContent() {
         if (eventMode !== 'standard') {
             if (
@@ -731,22 +739,22 @@ export function BookingPageInternalApp (props) {
                 fetchData.fetching ||
                 fetchData.status === 'not_fetched'
             ) {
-                return <div>{ltext.text('booking.details.loading')}</div>;
+                return (<div> </div>);
             }
 
             if (eventData.status === 'not_found') {
-                return <div>{ltext.text('booking.details.notFound')}</div>;
+                return errorContent('booking.details.notFound');
             }
 
             if (eventData.status === 'error' || fetchData.status === 'error') {
-                return <div>{ltext.text('booking.details.error')}</div>;
+                return errorContent('booking.details.error');
             }
 
             if (eventData.status === 'success' && fetchData.status === 'success') {
                 const baseDetails = buildEventDetails(eventData.data, fetchData.data);
 
                 if (!baseDetails) {
-                    return <div>{ltext.text('booking.details.notFound')}</div>;
+                    return errorContent('booking.details.notFound');
                 }
 
                 const startDateObj = new Date(baseDetails.startDate);
@@ -762,22 +770,18 @@ export function BookingPageInternalApp (props) {
                 };
 
                 if (eventMode === 'view') {
-                    return (
-                        <div className="appBookingContainer">
-                            <BookingEventDetails
+                    return ( <BookingEventDetails
                                 details={detailsWithFormatted}
                                 ltext={ltext}
                                 onReschedule={onClickReschedule}
                                 onCancel={onClickCancel}
                                 getRawTextByKey={getRawTextByKey}
                             />
-                        </div>
                     );
                 }
 
                 if (eventMode === 'reschedule') {
                     return (
-                        <div className="appBookingContainer">
                             <RescheduleBooking
                                 apiBase={apiBase}
                                 eventDetails={detailsWithFormatted}
@@ -786,8 +790,7 @@ export function BookingPageInternalApp (props) {
                                 getRawTextByKey={getRawTextByKey}
                                 appBookingConfigs={props.configs}
                             />
-                        </div>
-                    );
+                        );
                 }
             }
 
@@ -805,9 +808,7 @@ export function BookingPageInternalApp (props) {
         }
 
         return (
-            <div className="appBookingContainer">
-                <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
-            </div>
+            <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
         );
     }
 
@@ -815,11 +816,12 @@ export function BookingPageInternalApp (props) {
    return (
        <React.StrictMode>
            <div className="appBookingWidget">
+             <div className="appBookingContainer">
                { getMainContent() }
-
                { (fetchData.status === 'no_integrationIdParam') &&
                    (<div> Invalid config params </div> )
                }
+             </div>
            </div>
        </React.StrictMode>
    );}

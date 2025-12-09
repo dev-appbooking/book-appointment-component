@@ -87,12 +87,11 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         const specialistName = eventDetails.specialist
             ? `${eventDetails.specialist.title || ''} ${eventDetails.specialist.firstName || ''} ${eventDetails.specialist.lastName || ''}`.trim()
             : '-';
-        const locationName = eventDetails.location
-            ? `${eventDetails.location.name || ''}${eventDetails.location.city ? ' (' + eventDetails.location.city + ')' : ''}`
-            : '-';
+        const locationName = eventDetails.location ? `${eventDetails.location.name || ''}` : '-';
 
         const title = ltext.textValue(ltext.text('reschedule.step.current'), stepIndex + 1);
 
+        const dateTimeClass = "appBookingAttributesLine " + (rescheduleData.step === "reschedule_confirmation" ? "appBookingTextStrike appBookingTextNotImportant": "");
         return (
             <StepSummary title={title} showEdit={false} ltext={ltext}>
                 <div className="appBookingAttributesLine">
@@ -110,10 +109,10 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                 <div className="appBookingAttributesLine">
                     {ltext.text('service.address')}: {locationName}
                 </div>
-                <div className="appBookingAttributesLine">
-                    {ltext.text('booking.details.dateTime')}: {eventDetails.prettyDateTime}
+                <div className={dateTimeClass}>
+                     {ltext.textValue(ltext.text('step.slot.date'), eventDetails.prettyDateTime)}
                 </div>
-                <div className="appBookingAttributesLine">
+                <div className={dateTimeClass}>
                     {ltext.textValue(ltext.text('step.slot.hour'), eventDetails.timeStr)}
                 </div>
             </StepSummary>

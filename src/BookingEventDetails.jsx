@@ -11,11 +11,10 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
     const specialistName = details.specialist
         ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
         : '-';
-    const locationName = details.location
-        ? `${details.location.name || ''}${details.location.city ? ' (' + details.location.city + ')' : ''}`
-        : '-';
+    const locationName = details.location ? `${details.location.name || ''}` : '-';
+    
     const serviceName = details.service ? details.service.name : '-';
-
+    const isPastEvent = ((new Date(details.startDate)) < (new Date()));
     return (
         <>
             <div className="appBookingTitle"> { getRawTextByKey('booking.details.title')} </div>
@@ -106,12 +105,12 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
             <HorizontalBar />
 
             <div className="appBookingCtaContainer">
-                {onReschedule && (
+                {(onReschedule && (!isPastEvent)) && (
                     <button className="appBookingCtaButton" onClick={onReschedule}>
                         {ltext.text('cta.reschedule')}
                     </button>
                 )}
-                {(onCancel && (details.status !== 'canceled')) && (
+                {(onCancel && (details.status !== 'canceled') && (!isPastEvent)) && (
                     <button className="appBookingCtaButton appBookingCtaButtonDanger" onClick={onCancel}>
                         {ltext.text('cta.cancel')}
                     </button>
