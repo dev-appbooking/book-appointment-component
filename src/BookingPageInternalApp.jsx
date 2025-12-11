@@ -103,7 +103,7 @@ export function BookingPageInternalApp (props) {
         },
     [ ]);
 
-        useEffect(() => {
+    useEffect(() => {
         if (!props.eventId) {
             return;
         }
@@ -134,7 +134,7 @@ export function BookingPageInternalApp (props) {
                 }
             }
         })();
-    }, [props.eventId, apiBase]);
+    }, [props.eventId]);
 
 
     function onSelectService(serviceItem, index) {
@@ -445,13 +445,15 @@ export function BookingPageInternalApp (props) {
         if (!ok) return;
 
         try {
-            await httpRequest(
+            let event = await httpRequest(
                 'POST',
                 apiBase + `/api/event/booking/${props.eventId}/cancel`,
                 { },
                 { 'content-type': 'application/json' }
             );
             alert(ltext.text('cancel.success'));
+            setEventMode('view');
+            setEventData({ fetching: false, status: 'success', data: { ...event, id: props.eventId } });
         } catch (e) {
             alert(ltext.text('cancel.error'));
         }
@@ -597,7 +599,7 @@ export function BookingPageInternalApp (props) {
                     <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
                     <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
                                         specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
-                                        maxDaysToShow={3}
+                                        maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
                                         initialSlotsPerDay={5}
                                         onSelectSlot={onSelectBookingSlot}
                                         selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}

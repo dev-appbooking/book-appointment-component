@@ -200,7 +200,7 @@
     background-color: #fff;
     border-width: 1px;
     border-color: #99a1af;
-    width: 100%;
+    width: calc(100% - 16px);
     display: block;
     line-height: 1.6em;
     border-style: solid;
@@ -286,10 +286,7 @@
 
 /* Extra small devices (phones, 600px and down) */
 @media only screen and (max-width: 600px) {
-    .bookingContainer {
-    margin: 24px 8px;
-    width: 100%;
-    }
+
 }
 
 /* Small devices (portrait tablets and large phones, 600px and up) */
@@ -304,7 +301,6 @@
     }
     .appBookingStepTitle {
         width: 40%;
-        padding-bottom: 0px;
     }
     .appBookingStepContent {
         width: 60%;
@@ -317,9 +313,6 @@
 
 /* Large devices (laptops/desktops, 992px and up) */
 @media only screen and (min-width: 992px) {
-    .bookingContainer {
-    width: 800px;
-    }
     .appBookingCtaButton {
         width: auto;
     }
@@ -327,7 +320,5 @@
 
 /* Extra large devices (large laptops and desktops, 1200px and up) */
 @media only screen and (min-width: 1200px) {
-    .bookingContainer {
-        width: 900px;
-    }
+  
 }
