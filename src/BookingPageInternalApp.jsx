@@ -810,7 +810,7 @@ export function BookingPageInternalApp (props) {
         }
 
         return (
-            <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
+            <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} appBookingConfigs={props.configs} />
         );
     }
 
