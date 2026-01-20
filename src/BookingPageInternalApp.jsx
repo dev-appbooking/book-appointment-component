@@ -17,6 +17,7 @@ import { configurableText } from './utils/Utils.js';
 import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
+import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -597,16 +598,16 @@ export function BookingPageInternalApp (props) {
             return (
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
-                    <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
-                                        specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
-                                        maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
-                                        initialSlotsPerDay={5}
-                                        onSelectSlot={onSelectBookingSlot}
-                                        selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
-                                        ltext={ltext}
-                                        rawTextByKey={getRawTextByKey}
-                    />
-                </div>
+                        <ChooseAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
+                                            specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
+                                            maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
+                                            initialSlotsPerDay={5}
+                                            onSelectSlot={onSelectBookingSlot}
+                                            selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
+                                            ltext={ltext}
+                                            rawTextByKey={getRawTextByKey}
+                        />
+                    </div>
             )
         } else if ((bookingData.step != 'step_choose_slot') && bookingData.step_choose_slot.bookingSlot) {
 

@@ -72,7 +72,7 @@ let PublicNextAppSlot = function(props) {
             
         });
         return (
-            <>
+            <div className="appBookingItemsVerical">
             { 
                 daysArray.map( (daySlots) => {
                     let isThisDaySelected = props.selectedBookingSlot && (daySlots[0].day === props.selectedBookingSlot.day);
@@ -113,7 +113,7 @@ let PublicNextAppSlot = function(props) {
                         </div> );
                 })
             }
-            </>
+            </div>
         )
     }
 

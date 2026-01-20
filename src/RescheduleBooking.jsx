@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BookingSummary } from './BookingSummary.jsx';
 import { StepSummary } from './StepSummary.jsx';
 import { PublicNextAppSlot } from './PublicNextAppSlot.jsx';
+import { ChooseAppSlot } from './ChooseAppSlot.jsx';
 import { httpRequest } from './HttpRequest';
 import { format } from 'date-fns';
 import { formatLocalizedDateTime } from './utils/formatters';
@@ -142,7 +143,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
             return (
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle">{title}</div>
-                    <PublicNextAppSlot
+                    <ChooseAppSlot
                         apiBase={apiBase}
                         skuId={eventDetails.service ? eventDetails.service.id : eventDetails.serviceSkuId}
                         specialistId={eventDetails.specialist ? eventDetails.specialist.id : eventDetails.specialistId}
