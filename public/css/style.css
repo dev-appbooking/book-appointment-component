@@ -146,8 +146,7 @@
 
 .appBookingTimeSlotsContainer {
     height: 100%;
-    max-height: 400px;
-    padding: 16px;
+    padding: 16px 0px;
 }
 
 .appBookingTimeSlotsTitle {
@@ -389,12 +388,10 @@
 }
 
 .appBookingChooseDateCal {
-    flex-grow: 1;
     width: 100%;
 }
 
 .appBookingChooseDateSlots {
-    flex-grow: 1;
     width: 100%;
 }
 
@@ -402,6 +399,10 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+}
+.appBookingReserveBlockIcon {
+    width: 0px;
+    display: none;
 }
 
 /* Extra small devices (phones, 600px and down) */
@@ -422,9 +423,7 @@
     .appBookingStepTitle {
         width: 40%;
     }
-    .appBookingCal {
-        width: 400px;
-    }
+    
     .appBookingStepContent {
         width: 60%;
     }
@@ -436,8 +435,14 @@
         flex-direction: row;
     }
     .appBookingChooseDateCal {
-        flex-grow: 0;
-        width: auto;
+        width: 40%;
+    }
+    .appBookingChooseDateSlots {
+        width: 60%;    
+    }
+    .appBookingReserveBlockIcon {
+        width: 32px;
+        display: block;
     }
 }
 

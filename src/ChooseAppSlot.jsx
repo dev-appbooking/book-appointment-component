@@ -183,6 +183,7 @@ let ChooseAppSlot = function(props) {
                                             <MonthlyCalendar availableDays={getAvailableDays()} ltext={ltext} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} /> 
                                         </div>) }
             { !fetchingData.fetching && ( <div className="appBookingChooseDateSlots"> { getSuggestedSlotsContent() }  </div> ) }
+            { !fetchingData.fetching && ( <div className="appBookingReserveBlockIcon"> </div> ) } 
         </div>
     )
 }

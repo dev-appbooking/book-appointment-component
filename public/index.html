@@ -116,12 +116,14 @@ $(document).ready( function() {
     const locale = languageParam || urlParams.get('locale');
 
     const eventId = urlParams.get('eventId');
-    
+    const department = urlParams.get('department');
+
     const initConfigs = { 
                         integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         locale: locale,
                         eventId: eventId,
+                        department: department,
                         configs: {
                                     step_personal_data: {
                                         mandatory_data: []
