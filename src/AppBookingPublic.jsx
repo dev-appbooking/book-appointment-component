@@ -1,7 +1,7 @@
 import { BookingPageInternalApp } from "./BookingPageInternalApp.jsx";
 
 export function AppBookingPublic (props) {
-    let { integrationId, locale, appBookingApiBaseUrl, configs, eventId } = props;
+    let { integrationId, locale, appBookingApiBaseUrl, configs, eventId, department } = props;
 
     if ((configs && ! configs.step_personal_data) || (configs && configs.step_personal_data && !configs.step_personal_data.mandatory_data))  {
         configs.step_personal_data = { mandatory_data: ['name', 'mobile'] };
@@ -9,7 +9,7 @@ export function AppBookingPublic (props) {
 
     return (      
         <>
-            <BookingPageInternalApp locale={locale} integrationId={integrationId} appBookingApiBaseUrl={appBookingApiBaseUrl} configs={configs} eventId={eventId}/>
+            <BookingPageInternalApp locale={locale} integrationId={integrationId} appBookingApiBaseUrl={appBookingApiBaseUrl} configs={configs} eventId={eventId} departmentPublicId={department} />
         </>
     )
 }

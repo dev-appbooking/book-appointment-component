@@ -17,6 +17,7 @@ import { configurableText } from './utils/Utils.js';
 import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
+import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -24,10 +25,9 @@ export function BookingPageInternalApp (props) {
 
     const [ fetchData, setfetchData ] = useState({ fetching: false, status: 'not_fetched', data: [] } );
 
-    const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', step_choose_department: { departmentId: null, departmentIndex: null, enforceDepartment: false, showEdit: true, displayChooseDepartment: false },
+    const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', step_choose_department: { departmentId: null, departmentId: null, enforceDepartment: false, showEdit: true, displayChooseDepartment: false },
                                                                   step_choose_service: {  skuId: null,
                                                                             locationId: null,
-                                                                            serviceIndex: null,
                                                                             specialistId: null,
                                                                             showEdit: true,
                                                                             filterSelections: { },
@@ -85,10 +85,30 @@ export function BookingPageInternalApp (props) {
                     if (hasDepartments) {
                         step = 'step_choose_department';
                     }
+
+                    let departmentId = null;
+                    if (props.departmentPublicId && skusObj.skus) {
+                        //get the department data
+                        let foundDepartment = false;
+                        skusObj.skus.forEach( sku => {
+                            sku.data.forEach( item => { 
+                                item.departments.forEach( (department) => {
+                                    if (department.publicId === props.departmentPublicId) {
+                                        foundDepartment = true;
+                                        departmentId = department.id;
+                                    }
+                                });
+                            });
+                        })
+                        if (foundDepartment && hasDepartments) {
+                            step = 'step_choose_service';
+                        }
+                
+                    }
                     setBookingData( { ...bookingData, integrationId: integrationId, organizationId: (skusObj.skus[0].sku.organizationId),
                                                     step: step,
                                                     step_choose_service: { ...bookingData.step_choose_service, showEdit: skusObj.skus.length > 1 } ,
-                                                    step_choose_department: { ...bookingData.step_choose_department, displayChooseDepartment: hasDepartments }
+                                                    step_choose_department: { ...bookingData.step_choose_department, departmentId: departmentId, displayChooseDepartment: hasDepartments }
                         } );
 
                 } else {
@@ -138,7 +158,7 @@ export function BookingPageInternalApp (props) {
 
 
     function onSelectService(serviceItem, index) {
-        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceIndex: index, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
+        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceId: serviceItem.sku.id, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
     }
@@ -212,8 +232,8 @@ export function BookingPageInternalApp (props) {
     }
 
     function onSelectDepartment(departmentItem, index) {
-        setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id, departmentIndex: index },
-                                                   step_choose_service: { ...bookingData.step_choose_service, serviceIndex: null, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
+        setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
+                                                   step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
     }
@@ -318,7 +338,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function onEditStepChooseDepartment() {
-        setBookingData( { ...bookingData, step: 'step_choose_department', 'step_choose_service': { ...bookingData.step_choose_service, specialistId: null, serviceIndex: null, skuId: null, locationId: null, filterSelections: {} },
+        setBookingData( { ...bookingData, step: 'step_choose_department', 'step_choose_service': { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
                         } );
     }
@@ -490,7 +510,7 @@ export function BookingPageInternalApp (props) {
                         <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.department'), stepIndex + 1 ) } </div>
                         <CustomList
                         items={ allDepartmentsData } onSelectItem={onSelectDepartment}
-                        selectedIndex={bookingData.step_choose_department.departmentIndex}
+                        selectedId={bookingData.step_choose_department.departmentId}
                         itemContent={departmentItemContent}
                         ltext={ltext} />
 
@@ -574,7 +594,7 @@ export function BookingPageInternalApp (props) {
                     { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
                     <CustomList
                         items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService}
-                        selectedIndex={bookingData.step_choose_service.serviceIndex}
+                        selectedId={bookingData.step_choose_service.skuId}
                         expand={true}
                         itemContent={serviceItemContent}
                         ltext={ltext} />
@@ -597,16 +617,16 @@ export function BookingPageInternalApp (props) {
             return (
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
-                    <PublicNextAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
-                                        specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
-                                        maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
-                                        initialSlotsPerDay={5}
-                                        onSelectSlot={onSelectBookingSlot}
-                                        selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
-                                        ltext={ltext}
-                                        rawTextByKey={getRawTextByKey}
-                    />
-                </div>
+                        <ChooseAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
+                                            specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
+                                            maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
+                                            initialSlotsPerDay={5}
+                                            onSelectSlot={onSelectBookingSlot}
+                                            selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
+                                            ltext={ltext}
+                                            rawTextByKey={getRawTextByKey}
+                        />
+                    </div>
             )
         } else if ((bookingData.step != 'step_choose_slot') && bookingData.step_choose_slot.bookingSlot) {
 

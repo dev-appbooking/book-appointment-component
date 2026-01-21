@@ -145,9 +145,15 @@
 }
 
 .appBookingTimeSlotsContainer {
-    display:flex;
-    flex-wrap: wrap;
+    height: 100%;
+    padding: 16px 0px;
 }
+
+.appBookingTimeSlotsTitle {
+    font-size: 1.2em;
+    margin-bottom: 16px;
+}
+
 .appBookingDateLine {
     margin-bottom: 8px;
 }
@@ -284,6 +290,121 @@
     color: #99a1af;
 }
 
+
+.appBookingItemsHorizontal {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+.appBookingItemsGrow0 {
+    flex-grow: 0;
+}
+.appBookingItemsGrow1 {
+    flex-grow: 1;
+}
+.appBookingItemsWrap {
+    flex-wrap: wrap;
+}
+
+.appBookingItemsVerical {
+    display: flex;
+    flex-direction: column;
+}
+
+.appBookingCal {
+    padding: 16px;
+}
+
+.appBookingCalHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.appBookingCalHeaderText {
+    flex-grow: 1;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.appBookingCalHeaderDay {
+    padding: 8px;
+}
+
+.appBookingCalDays {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 450px;
+}
+.appBookingCalDay {
+    flex: 1 0 14.28%;
+    text-align: center;
+}
+
+.appBookingCalNavIcon {
+    width: 24px;
+    height: 24px;
+    color: #155dfc;
+}
+.appBookingCalNavBtn {
+    cursor: pointer;
+    background-color: rgba(0,0,0,0);
+    margin: 0 16px;
+    flex-grow: 0;
+    border: 0;
+}
+
+.appBookingCalDayBtn {
+    margin-top: 8px;
+    border: 0px; 
+    font-size: 1em;
+    background-color: transparent;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #c6c6c6;
+}
+
+.appBookingCalDayBtnAvailable {
+    border: 2px solid #00695f;
+    color: #00695f;
+    cursor: pointer;
+}
+
+.appBookingCalDayBtnAvailable:hover {
+    background-color: #00695f;
+    color: #FFF;
+}
+
+.appBookingCalDayBtnSelected {
+    background-color: #00695f;
+    color: #FFF;
+}
+
+.appBookingCalDayBtnOtherMonth {
+    color: #c6c6c6;
+}
+
+.appBookingChooseDateCal {
+    width: 100%;
+}
+
+.appBookingChooseDateSlots {
+    width: 100%;
+}
+
+.appBookingChooseDate {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+.appBookingReserveBlockIcon {
+    width: 0px;
+    display: none;
+}
+
 /* Extra small devices (phones, 600px and down) */
 @media only screen and (max-width: 600px) {
 
@@ -302,12 +423,26 @@
     .appBookingStepTitle {
         width: 40%;
     }
+    
     .appBookingStepContent {
         width: 60%;
     }
     .appBookingStepSummaryContainer {
         margin-top: 0;
         flex-direction: row;
+    }
+    .appBookingChooseDate {
+        flex-direction: row;
+    }
+    .appBookingChooseDateCal {
+        width: 40%;
+    }
+    .appBookingChooseDateSlots {
+        width: 60%;    
+    }
+    .appBookingReserveBlockIcon {
+        width: 32px;
+        display: block;
     }
 }
 

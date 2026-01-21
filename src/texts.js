@@ -10,6 +10,7 @@ export const localizationTexts = {
         'step.slot.hour': 'Oră programare: {0}',
         'step.slot.date': 'Dată programare: {0}',
         'step.slot.done': 'Pasul {0}. Data si ora aleasă',
+        'step.slot.chooseSlot': 'Alege un interval pentru programare',
         'step.slot.noSlots': 'Toate intervalele de programare au fost deja rezervate. Te rugăm să încerci mai târziu.',
         'step.personalInfo': 'Pasul {0}. Completează datele personale',
         'step.personalInfo.done': 'Pasul {0}. Date personale',
@@ -65,8 +66,29 @@ export const localizationTexts = {
 
         'cancel.confirm': 'Ești sigur că vrei să anulezi programarea?',
         'cancel.success': 'Programarea a fost anulată cu succes.',
-        'cancel.error': 'Nu am putut anula programarea. Te rugăm să încerci din nou.'
+        'cancel.error': 'Nu am putut anula programarea. Te rugăm să încerci din nou.',
 
+        'cal.month.0': 'Ianuarie',
+        'cal.month.1': 'Februarie',
+        'cal.month.2': 'Martie',
+        'cal.month.3': 'Aprilie',
+        'cal.month.4': 'Mai',
+        'cal.month.5': 'Iunie',
+        'cal.month.6': 'Iulie',
+        'cal.month.7': 'August',
+        'cal.month.8': 'Septembrie',
+        'cal.month.9': 'Octombrie',
+        'cal.month.10': 'Noiembrie',
+        'cal.month.11': 'Decembrie',
+        'cal.wday.s.Mo': 'Lu',
+        'cal.wday.s.Tu': 'Ma',
+        'cal.wday.s.We': 'Mi',
+        'cal.wday.s.Th': 'Jo',
+        'cal.wday.s.Fr': 'Vi',
+        'cal.wday.s.Su': 'Sâ',
+        'cal.wday.s.Sa': 'Du',
+        
+        
 
     },
 
@@ -78,6 +100,7 @@ export const localizationTexts = {
         'step.service': 'Step {0}. Choose a service',
         'step.service.done': 'Step {0}. Selected service',
         'step.slot': 'Step {0}. Choose the appointment date and time',
+        'step.slot.chooseSlot': 'Choose one of the available slots',
         'step.slot.hour': 'Appointment time: {0}',
         'step.slot.date': 'Appointment date: {0}',
         'step.slot.done': 'Step {0}. Appointment date and time',
@@ -137,8 +160,27 @@ export const localizationTexts = {
 
         'cancel.confirm': 'Are you sure you want to cancel this appointment?',
         'cancel.success': 'The appointment was cancelled successfully.',
-        'cancel.error': 'We could not cancel the appointment. Please try again later.'
+        'cancel.error': 'We could not cancel the appointment. Please try again later.',
 
+        'cal.month.0': 'January',
+        'cal.month.1': 'February',
+        'cal.month.2': 'March',
+        'cal.month.3': 'April',
+        'cal.month.4': 'May',
+        'cal.month.5': 'June',
+        'cal.month.6': 'July',
+        'cal.month.7': 'August',
+        'cal.month.8': 'September',
+        'cal.month.9': 'October',
+        'cal.month.10': 'November',
+        'cal.month.11': 'December',
+        'cal.wday.s.Mo': 'Mo',
+        'cal.wday.s.Tu': 'Tu',
+        'cal.wday.s.We': 'We',
+        'cal.wday.s.Th': 'Th',
+        'cal.wday.s.Fr': 'Fr',
+        'cal.wday.s.Su': 'Sa',
+        'cal.wday.s.Sa': 'Su',
 
     }
 };

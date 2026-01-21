@@ -58,7 +58,8 @@
         /* Extra large devices (large laptops and desktops, 1200px and up) */
         @media only screen and (min-width: 1200px) {
             .bookingContainer {
-                width: 900px;
+                width: 90%;
+                max-width: 1200px;
             }
         }
 
@@ -115,12 +116,14 @@ $(document).ready( function() {
     const locale = languageParam || urlParams.get('locale');
 
     const eventId = urlParams.get('eventId');
-    
+    const department = urlParams.get('department');
+
     const initConfigs = { 
                         integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         locale: locale,
                         eventId: eventId,
+                        department: department,
                         configs: {
                                     step_personal_data: {
                                         mandatory_data: []
