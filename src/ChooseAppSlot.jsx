@@ -175,7 +175,7 @@ let ChooseAppSlot = function(props) {
                 setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
-    }, [props.specialistId, props.startDate, props.selectedBookingSlot] );
+    }, [props.specialistId, props.startDate] );
 
     return (
         <div class="appBookingChooseDate">
