@@ -20,9 +20,10 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         status: 'initial',
         confirmationId: null
     });
+    const hideSpecialistName = appBookingConfigs.showSpecialistNameOnServiceItem === false ;
 
     function onSelectSlot(slot) {
-        setRescheduleData(prev => ({ ...prev, selectedSlot: slot }));
+        setRescheduleData({ ...rescheduleData, selectedSlot: slot });
     }
 
     function onToggleTerms(e) {
@@ -104,9 +105,9 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                 <div className="appBookingAttributesLine">
                     {ltext.text('customer.mobile')}: {customer.mobile || '-'}
                 </div>
-                <div className="appBookingAttributesLine">
+                { (!hideSpecialistName) && <div className="appBookingAttributesLine">
                     {ltext.text('service.specialist')}: {specialistName}
-                </div>
+                </div> }
                 <div className="appBookingAttributesLine">
                     {ltext.text('service.address')}: {locationName}
                 </div>

@@ -2,7 +2,7 @@ import { HorizontalBar } from './HorizontalBar.jsx';
 import { StepSummary } from './StepSummary.jsx';
 import { ClockIcon, LocationIcon, CalendarIcon } from './utils/Utils.js';
 
-export function BookingEventDetails({ details, ltext, onReschedule, onCancel, getRawTextByKey }) {
+export function BookingEventDetails({ details, ltext, onReschedule, onCancel, getRawTextByKey, appBookingConfigs }) {
     if (!details) {
         return null;
     }
@@ -11,6 +11,8 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
     const specialistName = details.specialist
         ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
         : '-';
+    const hideSpecialistName = appBookingConfigs.showSpecialistNameOnServiceItem === false ;
+
     const locationName = details.location ? `${details.location.name || ''}` : '-';
     
     const serviceName = details.service ? details.service.name : '-';
@@ -80,9 +82,9 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
                         { serviceName }
                     </div>
 
-                    <div className="appBokingServiceLineItem"> 
+                    { (!hideSpecialistName) && ( <div className="appBokingServiceLineItem"> 
                         { specialistName }
-                    </div>
+                    </div> ) }
                     
                     <div className="appBokingServiceLineItem">
                         <div className="appBookingServiceAttr">

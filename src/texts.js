@@ -4,6 +4,9 @@ export const localizationTexts = {
         'field.optional': ' (opțional)',
         'step.department': 'Pasul {0}. Alege categoria de servicii',
         'step.department.done': 'Pasul {0}. Categoria aleasă',
+        'step.specialist': 'Pasul {0}. Alege specialistul',
+        'step.specialist.done': 'Pasul {0}. Specialistul aleas',
+        
         'step.service': 'Pasul {0}. Alege serviciul dorit',
         'step.service.done': 'Pasul {0}. Serviciul ales',
         'step.slot': 'Pasul {0}. Alege data și ora programării',

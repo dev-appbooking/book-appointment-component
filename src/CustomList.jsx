@@ -9,7 +9,7 @@ export function CustomList(props) {
         }
         return (
             <div key={index} className={classValue} onClick={ (e) => { e.stopPropagation(); props.onSelectItem(item, index) } } > 
-                <div class="appBookingListItemContent"> { props.itemContent(item, props.selectedId) } </div>
+                <div class="appBookingListItemContent"> { props.itemContent(item, props.selectedId === item.id) } </div>
             </div>
         )
     }

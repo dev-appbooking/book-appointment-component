@@ -25,20 +25,28 @@ export function BookingPageInternalApp (props) {
 
     const [ fetchData, setfetchData ] = useState({ fetching: false, status: 'not_fetched', data: [] } );
 
-    const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', step_choose_department: { departmentId: null, departmentId: null, enforceDepartment: false, showEdit: true, displayChooseDepartment: false },
-                                                                  step_choose_service: {  skuId: null,
-                                                                            locationId: null,
-                                                                            specialistId: null,
-                                                                            showEdit: true,
-                                                                            filterSelections: { },
-                                                                            displayFacetedSearch: false
-                                                                         } ,
-                                                                  step_choose_slot: { bookingSlot: null, showEdit: true },
-                                                                  step_personal_data: { name: '', mobile: '', email: '', acceptTerms: false, errors: { } },
-                                                                  step_confirmation: { bookingConfirmationId: null },
-                                                                  bookingStatus: 'initial', submitted: false,
-                                                                  integrationId: null,
-                                                                  organizationId: null } );
+    const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', 
+                                                                step_choose_department: { departmentId: null, enforceDepartment: false, showEdit: true, displayChooseDepartment: false },
+                                                                step_choose_specialist: { 
+                                                                        specialistId: null,
+                                                                        showEdit: true,
+                                                                        displayChooseSpecialist: false
+                                                                        },
+                                                                step_choose_service: {  skuId: null,
+                                                                        locationId: null,
+                                                                        specialistId: null,
+                                                                        showEdit: true,
+                                                                        filterSelections: { },
+                                                                        displayFacetedSearch: false
+                                                                        } ,
+                                                                step_choose_slot: { bookingSlot: null, showEdit: true },
+                                                                step_personal_data: { name: '', mobile: '', email: '', acceptTerms: false, errors: { } },
+                                                                step_confirmation: { bookingConfirmationId: null },
+                                                                bookingStatus: 'initial', submitted: false,
+                                                                integrationId: null,
+                                                                organizationId: null,
+                                                                steps: null } 
+                                                                );
 
     const [ bookingStatus, setBookingStatus] = useState({ submit: false, status: 'initial' });
 
@@ -70,6 +78,19 @@ export function BookingPageInternalApp (props) {
         return Object.keys(resDepartments).length;
     }
 
+    function integrationCountSpecialists(skus) {
+        let resSpecialists = { } ;
+        skus = skus || [];
+        skus.forEach ( sku => {
+            let skuDataArray = sku.data || [];
+            skuDataArray.forEach ( skuData => {
+                resSpecialists[skuData.specialist.id] = true;
+            });
+        });
+        return Object.keys(resSpecialists).length;
+    }
+
+
     useEffect ( () => {
         (async function() {
             try {
@@ -85,6 +106,7 @@ export function BookingPageInternalApp (props) {
                     if (hasDepartments) {
                         step = 'step_choose_department';
                     }
+                    let hasMoreSpecialists = integrationCountSpecialists(skusObj.skus) > 1;
 
                     let departmentId = null;
                     if (props.departmentPublicId && skusObj.skus) {
@@ -105,9 +127,22 @@ export function BookingPageInternalApp (props) {
                         }
                 
                     }
+
+                    let steps = ['step_choose_specialist', 'step_choose_service', 'step_choose_slot', 'step_personal_data', 'step_confirmation'];
+        
+                    if (props.configs.step_choose_specialist && props.configs.step_choose_specialist.hide === true) {
+                        steps.splice(0, 1);
+                    }
+
+                    if (bookingData.step_choose_department && hasDepartments) {
+                        steps.unshift('step_choose_department');
+                    }
+
                     setBookingData( { ...bookingData, integrationId: integrationId, organizationId: (skusObj.skus[0].sku.organizationId),
                                                     step: step,
+                                                    steps: steps,
                                                     step_choose_service: { ...bookingData.step_choose_service, showEdit: skusObj.skus.length > 1 } ,
+                                                    step_choose_specialist: { ...bookingData.step_choose_specialist, showEdit: hasMoreSpecialists },
                                                     step_choose_department: { ...bookingData.step_choose_department, departmentId: departmentId, displayChooseDepartment: hasDepartments }
                         } );
 
@@ -227,12 +262,39 @@ export function BookingPageInternalApp (props) {
                 </> );
     }
 
+    function specialistItemContent(item, isSelected) {
+        return ( <>
+                <div className="appBookingContentGrow"> { getSpecialistFullName(item) } </div>
+                { isSelected && <div className="appBookingSelectedItemIcon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </div> }
+                </> );
+    }
+
     function departmentSummaryItemContent(item) {
         return ( <div>  { item.name } </div> )
     }
 
+    function specialistSummaryItemContent(item) {
+        return ( <div>  { getSpecialistFullName(item) } </div> )
+    }
+
     function onSelectDepartment(departmentItem, index) {
-        setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
+        let step = 'step_choose_specialist';
+        if (bookingData.steps.indexOf('step_choose_specialist') < 0) {
+            step = 'step_choose_service';
+        }
+        setBookingData( { ...bookingData, step: step, step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
+                                                   step_choose_specialist: { ...bookingData.step_choose_specialist, specialistId: null },
+                                                   step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
+                                                   step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
+                        } );
+    }
+
+    function onSelectSpecialist(specialistItem, index) {
+        setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_specialist: {  ...bookingData.step_choose_specialist, specialistId: specialistItem.id },
                                                    step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
@@ -328,6 +390,7 @@ export function BookingPageInternalApp (props) {
             let res = await httpRequest('POST', apiBase + "/api/appointment/booking", bodyReq, { 'content-type': 'application/json'});
             setBookingData( { ...bookingData, step: 'step_confirmation', step_confirmation: { bookingConfirmationId: res.id },
                                                                 step_choose_department: { ...bookingData.step_choose_department, showEdit: false},
+                                                                step_choose_specialist: { ...bookingData.step_choose_specialist, showEdit: false},
                                                                 step_choose_service: { ...bookingData.step_choose_service, showEdit: false},
                                                                 step_choose_slot: { ...bookingData.step_choose_slot, showEdit: false} } );
             setBookingStatus({ submit: false, status: 'success' });
@@ -338,8 +401,17 @@ export function BookingPageInternalApp (props) {
     }
 
     function onEditStepChooseDepartment() {
-        setBookingData( { ...bookingData, step: 'step_choose_department', 'step_choose_service': { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
-                                                   step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
+        setBookingData( { ...bookingData, step: 'step_choose_department', 
+                                                step_choose_specialist: { ...bookingData.step_choose_specialist, specialistId: null },   
+                                                step_choose_service: { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
+                                                step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
+                        } );
+    }
+
+    function onEditStepChooseSpecialist() {
+        setBookingData( { ...bookingData, step: 'step_choose_specialist', 
+                                                step_choose_service: { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
+                                                step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
                         } );
     }
 
@@ -526,6 +598,56 @@ export function BookingPageInternalApp (props) {
         }
     }
 
+    function contentForStep_specialist(stepIndex) {
+
+        let specialists = {};
+        let allSpecialistsData = [];
+        let selectedSpecialist = null;
+        fetchData.data.forEach( sku => {
+            sku.data.forEach( (itemData, index) => {
+                if (itemData.specialist.id in specialists) {
+                    // we already have this specialist id
+                    return;
+                }
+                if (itemData.specialist.id === bookingData.step_choose_specialist.specialistId) {
+                    selectedSpecialist = itemData.specialist;
+                }
+
+                let dataDepartments = itemData.departments || [];
+                dataDepartments.forEach( dataDepartment => {
+                    if (dataDepartment.id === bookingData.step_choose_department.departmentId ) {
+                        allSpecialistsData.push(itemData.specialist);
+                        specialists[itemData.specialist.id] = true;
+                        return;
+                    }
+                });
+            });
+        });
+
+        if (bookingData.step === 'step_choose_specialist') {
+            return (<>
+                        <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.specialist'), stepIndex + 1 ) } </div>
+                        <CustomList
+                        items={ allSpecialistsData } onSelectItem={onSelectSpecialist}
+                        selectedId={bookingData.step_choose_specialist.specialistId}
+                        itemContent={specialistItemContent}
+                        ltext={ltext} />
+
+                    </>
+                    );
+        } else if ((bookingData.step !== 'step_choose_specialist') && (selectedSpecialist)) {
+            let title = ltext.textValue(getRawTextByKey('step.specialist.done'), stepIndex + 1);
+            return (<StepSummary title={title} onEdit={onEditStepChooseSpecialist} showEdit={bookingData.step_choose_specialist.showEdit} ltext={ltext}>
+                        { specialistSummaryItemContent(selectedSpecialist) }
+                    </StepSummary>)
+        } else {
+            return (
+                    <div className="appBookingStepTitle"> { ltext.textValue(getRawTextByKey('step.specialist'), stepIndex + 1) } </div>
+            )   
+        }
+        
+    }
+
     function contentForStep_service(stepIndex) {
         let specialists = {};
         let locations = {};
@@ -550,6 +672,10 @@ export function BookingPageInternalApp (props) {
                 if ((! foundDepartment) && bookingData.step_choose_department.displayChooseDepartment) {
                     return;
                 }
+                if (bookingData.step_choose_specialist.specialistId && (bookingData.step_choose_specialist.specialistId !== itemData.specialist.id)) {
+                    return;
+                }
+                
                 let objSku = { sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
 
                 if (!oneServicePerSkuAndSpecialists) {
@@ -728,6 +854,9 @@ export function BookingPageInternalApp (props) {
 
     function contentForSummary(stepName, stepIndex) {
         switch (stepName) {
+            case 'step_choose_specialist': {
+                return contentForStep_specialist(stepIndex);
+            }
             case 'step_choose_department': {
                 return contentForStep_category(stepIndex);
             }
@@ -798,6 +927,7 @@ export function BookingPageInternalApp (props) {
                                 onReschedule={onClickReschedule}
                                 onCancel={onClickCancel}
                                 getRawTextByKey={getRawTextByKey}
+                                appBookingConfigs={props.configs}
                             />
                     );
                 }
@@ -824,13 +954,8 @@ export function BookingPageInternalApp (props) {
             return;
         }
 
-        let steps = ['step_choose_service', 'step_choose_slot', 'step_personal_data', 'step_confirmation'];
-        if (bookingData.step_choose_department && bookingData.step_choose_department.displayChooseDepartment) {
-            steps.unshift('step_choose_department');
-        }
-
         return (
-            <BookingSummary contentForStep={contentForSummary} steps={steps} ltext={ltext} configs={props.configs} />
+            <BookingSummary contentForStep={contentForSummary} steps={bookingData.steps} ltext={ltext} appBookingConfigs={props.configs} />
         );
     }
 
