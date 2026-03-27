@@ -18,11 +18,13 @@ import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
 import { ChooseAppSlot } from './ChooseAppSlot.jsx'
+import { ServicesWithNextAppSlot } from './ServicesWithNextAppSlot.jsx';
 /*
 This booking Page can have several steps depending on what services are setup.
 */
 export function BookingPageInternalApp (props) {
 
+    const specialistAnyID = 'specialist.any';
     const [ fetchData, setfetchData ] = useState({ fetching: false, status: 'not_fetched', data: [] } );
 
     const [ bookingData, setBookingData ]  = useState( { step: 'step_choose_department', 
@@ -192,10 +194,17 @@ export function BookingPageInternalApp (props) {
     }, [props.eventId]);
 
 
-    function onSelectService(serviceItem, index) {
-        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, serviceId: serviceItem.sku.id, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
+    function onSelectMoreSlots(serviceItem) {
+        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
+    }
+
+    function onSelectServiceAndSlot(serviceItem, slot) {
+        setBookingData( { ...bookingData, step: 'step_personal_data', 
+                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: slot },
+                    step_choose_service: { ...bookingData.step_choose_service, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} }
+                } );
     }
 
     function getSpecialistFullName( item ) {
@@ -263,8 +272,14 @@ export function BookingPageInternalApp (props) {
     }
 
     function specialistItemContent(item, isSelected) {
+        let specialistName;
+        if (item.id === specialistAnyID) {
+            specialistName = ltext.text('specialist.any');
+        } else {
+            specialistName = getSpecialistFullName(item)
+        }
         return ( <>
-                <div className="appBookingContentGrow"> { getSpecialistFullName(item) } </div>
+                <div className="appBookingContentGrow"> { specialistName } </div>
                 { isSelected && <div className="appBookingSelectedItemIcon">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -278,7 +293,13 @@ export function BookingPageInternalApp (props) {
     }
 
     function specialistSummaryItemContent(item) {
-        return ( <div>  { getSpecialistFullName(item) } </div> )
+        let specialistName;
+        if (item.id === specialistAnyID) {
+            specialistName = ltext.text('specialist.any');
+        } else {
+            specialistName = getSpecialistFullName(item);
+        }
+        return ( <div>  { specialistName } </div> )
     }
 
     function onSelectDepartment(departmentItem, index) {
@@ -424,6 +445,7 @@ export function BookingPageInternalApp (props) {
         setBookingData( { ...bookingData, step: 'step_choose_slot', 'step_confirmation': { bookingConfirmationId: null } } );
     }
 
+    
     function onChangeFacetedFilter(filterGroupId, filterItemId) {
         let filterData = JSON.parse(JSON.stringify(bookingData.step_choose_service.filterSelections));
 
@@ -444,7 +466,8 @@ export function BookingPageInternalApp (props) {
         }
         setBookingData( { ...bookingData, step_choose_service: { ...bookingData.step_choose_service, filterSelections: filterData } } );
     }
-
+    
+    /*
     function filteredServices(skus, filterSelections) {
         // filterSelections is an object whos kaye are 'specialists' or 'locations' and each of these map with on object who's keys are the filter selections (ids)
         if (Object.keys(filterSelections).length === 0) {
@@ -464,6 +487,7 @@ export function BookingPageInternalApp (props) {
         });
         return result;
     }
+    */
 
 
     function buildEventDetails(event, skus) {
@@ -623,7 +647,13 @@ export function BookingPageInternalApp (props) {
                 });
             });
         });
-
+        if (allSpecialistsData.length > 1) {
+            // add the option for 'any specialist'.
+            allSpecialistsData.splice(0, 0, { id: specialistAnyID });
+        }
+        if (bookingData.step_choose_specialist.specialistId === specialistAnyID) {
+            selectedSpecialist = { id: specialistAnyID };
+        }
         if (bookingData.step === 'step_choose_specialist') {
             return (<>
                         <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.specialist'), stepIndex + 1 ) } </div>
@@ -672,7 +702,9 @@ export function BookingPageInternalApp (props) {
                 if ((! foundDepartment) && bookingData.step_choose_department.displayChooseDepartment) {
                     return;
                 }
-                if (bookingData.step_choose_specialist.specialistId && (bookingData.step_choose_specialist.specialistId !== itemData.specialist.id)) {
+
+                if (bookingData.step_choose_specialist.specialistId && ((bookingData.step_choose_specialist.specialistId !== itemData.specialist.id) && (bookingData.step_choose_specialist.specialistId !== specialistAnyID)))
+                {
                     return;
                 }
                 
@@ -708,23 +740,26 @@ export function BookingPageInternalApp (props) {
                 }
             });
         });
+
+        let departmentId = bookingData.step_choose_department.departmentId;
         if (bookingData.step === 'step_choose_service') {
-            let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1);
-            let filterData = { items: fetchData.data, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
-                                                                     { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) } ],
-                                    filterSelections: bookingData.step_choose_service.filterSelections
-                                } ;
             return (
-            <div>
-                <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.service'), stepIndex + 1) } </div>
-                    { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
-                    <CustomList
-                        items={ filteredServices(allSkuData, bookingData.step_choose_service.filterSelections) } onSelectItem={onSelectService}
-                        selectedId={bookingData.step_choose_service.skuId}
-                        expand={true}
-                        itemContent={serviceItemContent}
-                        ltext={ltext} />
-            </div>
+                <ServicesWithNextAppSlot allSkus={fetchData.data} 
+                                         appBookingConfigs={props.configs} 
+                                         skuId={bookingData.step_choose_service.skuId}
+                                         locationId={bookingData.step_choose_specialist.locationId}
+                                         specialistId={bookingData.step_choose_specialist.specialistId}
+                                         departmentId={departmentId}
+                                         specialistFullName={getSpecialistFullName}
+                                         specialistAnyID={specialistAnyID}
+                                         onChangeFacetedFilter={onChangeFacetedFilter}
+                                         onSelectMoreSlots={onSelectMoreSlots}
+                                         onSelectServiceAndSlot={onSelectServiceAndSlot}
+                                         filterSelections={bookingData.step_choose_service.filterSelections} 
+                                         apiBase={apiBase}
+                                         organizationId={bookingData.organizationId}
+                                         maxSlotsPerItem={2}
+                                         ltext={ltext} />
             )
         } else if ((bookingData.step !== 'step_choose_service') && selectedService) {
             let title = ltext.textValue(getRawTextByKey('step.service.done'), stepIndex + 1);

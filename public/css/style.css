@@ -35,7 +35,7 @@
     gap: 8px;
 }
 
-.appBookingListItem {
+.appBookingListItem, .appBookingListItemSimple {
     width: 100%;
     transition: box-shadow .2s linear;
     background-color: #fff;
@@ -118,8 +118,17 @@
 
 .appBookingServiceHeader {
     display: flex;
+    font-size: 1.2em;
+    margin-bottom: 8px;
 }
 
+.appBookingServiceSpecialist {
+    margin-bottom: 8px;
+}
+
+.appBookingServicePrice {
+    color: #5b5b5b;
+}
 .appBokingServiceLineItem {
     display: flex;
     flex-direction: row;
@@ -133,6 +142,8 @@
 .appBookingServiceAttr {
     display: flex;
     flex: none;
+    color: #5b5b5b;
+    font-size: 0.8em;
 }
 
 .appBookingServiceAttrIcon {
@@ -155,8 +166,19 @@
 }
 
 .appBookingDateLine {
-    margin-bottom: 8px;
+    margin: 8px 0px;
+    color: #5b5b5b;
 }
+.appBookingDateLineHeader {
+    color: #5b5b5b;
+    margin-bottom: 4px;
+    font-size: 0.8em;
+}
+
+.appBookingDateLineContent {
+    margin-bottom: 4px;
+}
+
 
 .appBookingTimeSlotButton {
     padding: 8px;
@@ -164,8 +186,6 @@
     cursor: pointer;
     border-width: 2px;
     border-color: #00695f;
-    margin-right: 16px;
-    margin-bottom: 16px;
     background-color: #fff;
     border-radius: 4px;
     font-size: 1em;
@@ -187,7 +207,15 @@
     box-shadow: 0 0 0 1px #c9cbcf;
     margin-bottom: 8px;
     padding: 8px;
-    font-size: 0.85em;
+}
+
+.appBookingFacetGroupItem {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    color: #5b5b5b;
 }
 
 .appBookingFormFieldSet {
@@ -294,7 +322,9 @@
 .appBookingItemsHorizontal {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
+    gap: 8px;
 }
 .appBookingItemsGrow0 {
     flex-grow: 0;
