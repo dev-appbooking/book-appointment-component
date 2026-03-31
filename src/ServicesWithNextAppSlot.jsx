@@ -17,6 +17,7 @@ let ServicesWithNextAppSlot = function(props) {
     let ltext = props.ltext;
     let specialists = {};
     let locations = {};
+    let services = { };
     let inScopeSkusData = [];
     let selectedItemId = null;
 
@@ -54,6 +55,7 @@ let ServicesWithNextAppSlot = function(props) {
             }
 
             locations[itemData.location.id] = { id: itemData.location.id, value: `${itemData.location.name} (${itemData.location.city})` };
+            services[sku.sku.name] = { id: sku.sku.name, value: sku.sku.name };
 
             if (!oneServicePerSkuAndSpecialists) {
                 inScopeSkusData.push( objSku );
@@ -112,7 +114,7 @@ let ServicesWithNextAppSlot = function(props) {
     }
 
     function filteredServices(skus, filterSelections) {
-        // filterSelections is an object whos keys are 'specialists' or 'locations' and each of these map with on object who's keys are the filter selections (ids)
+        // filterSelections is an object whos keys are 'specialists', 'locations', 'services' and each of these map with on object who's keys are the filter selections (ids)
         if (Object.keys(filterSelections).length === 0) {
             // there are no filters so just return everything
             return skus;
@@ -123,6 +125,9 @@ let ServicesWithNextAppSlot = function(props) {
                 return; // the specialist for this sku is not selected in the filter so just return
             }
             if (filterSelections['locations'] && (! filterSelections['locations'][sku.location.id])) {
+                return; // the location for this sku is not selected in the filter so just return
+            }
+            if (filterSelections['services'] && (! filterSelections['services'][sku.sku.name])) {
                 return; // the location for this sku is not selected in the filter so just return
             }
             // we got this far so the sku passes the filter
@@ -196,8 +201,14 @@ let ServicesWithNextAppSlot = function(props) {
                         </div>
             </div> );
         }
-
+        
+        function getLabelContent() {
+            if (item.sku.attributes && item.sku.attributes.labels && (item.sku.attributes.labels.length > 0)) {
+                return <div class="appBookingServiceLabel"> { item.sku.attributes.labels[0] } </div>
+            }
+        }
         return (<div className="appBookingServiceContainer">
+            { getLabelContent() }
             <div className="appBokingServiceLineItem appBookingServiceHeader">
                 <div className="appBookingContentGrow"> { item.sku.name } </div>
                 { isSelected && <div className="appBookingSelectedItemIcon">
@@ -241,12 +252,13 @@ let ServicesWithNextAppSlot = function(props) {
     function getServicesContent() {
         let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1);
         let filterData = { items: props.allSkus, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
-                                                                { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) } ],
+                                                                { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) },
+                                                                { id: 'services', title_key: 'filter.services', values: Object.values(services) } ],
                                 filterSelections: props.filterSelections
                             } ;
         return (
         <div>
-            <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(configurableText('step.service', props.appBookingConfigs, ltext),  1) } </div>
+            <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(configurableText('step.service', props.appBookingConfigs, ltext),  props.stepIndex + 1) } </div>
                 { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
                 <CustomList
                     items={ filteredServices(inScopeSkusData, props.filterSelections) } onSelectItem1={onSelectService}

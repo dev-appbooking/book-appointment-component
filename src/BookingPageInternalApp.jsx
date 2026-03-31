@@ -759,7 +759,8 @@ export function BookingPageInternalApp (props) {
                                          apiBase={apiBase}
                                          organizationId={bookingData.organizationId}
                                          maxSlotsPerItem={2}
-                                         ltext={ltext} />
+                                         ltext={ltext} 
+                                         stepIndex={stepIndex} />
             )
         } else if ((bookingData.step !== 'step_choose_service') && selectedService) {
             let title = ltext.textValue(getRawTextByKey('step.service.done'), stepIndex + 1);
