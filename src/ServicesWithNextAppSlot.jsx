@@ -115,9 +115,44 @@ let ServicesWithNextAppSlot = function(props) {
 
     function filteredServices(skus, filterSelections) {
         // filterSelections is an object whos keys are 'specialists', 'locations', 'services' and each of these map with on object who's keys are the filter selections (ids)
+        
+        function sortByFirstAvailableSlot(skusArray) {
+            if (Object.keys(suggestedEvents).length === 0) {
+                return skusArray; 
+            }
+            // we have the suggested events so sort services asc by the fisrt available slot
+
+            skusArray.forEach( sku => {
+                if (sku.id in suggestedEvents) {
+                    if (suggestedEvents[sku.id].length === 0) {
+                        sku.firstSlot = null; 
+                    }
+                    else {
+                        let firstSlot = new Date(suggestedEvents[sku.id][0].startDate);
+                        sku.firstSlot = firstSlot;
+                    }
+                } else {
+                    sku.firstSlot = null;
+                }
+            });
+
+            // order by available slots
+            return skusArray.sort( (a, b) => {
+                if (a.firstSlot && b.firstSlot) {
+                    return a.firstSlot - b.firstSlot;
+                }  else if (a.firstSlot) { 
+                    return -1;
+                } else if (b.firstSlot) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
+        }
+        
         if (Object.keys(filterSelections).length === 0) {
             // there are no filters so just return everything
-            return skus;
+            return sortByFirstAvailableSlot(skus);
         }
         let result = [];
         skus.forEach( sku => {
@@ -133,7 +168,12 @@ let ServicesWithNextAppSlot = function(props) {
             // we got this far so the sku passes the filter
             result.push(sku);
         });
-        return result;
+
+
+        if (Object.keys(suggestedEvents).length === 0) {
+            return result; 
+        }
+        return sortByFirstAvailableSlot(result);
     }
 
     function onSelectService(serviceItem) {
@@ -161,11 +201,11 @@ let ServicesWithNextAppSlot = function(props) {
 
         function getAvailableSlots(record) {
             if (!(record.id in suggestedEvents)) {
-                return ( <> No slots available </>)
+                return ( <div className="appBookingWarningText"> { ltext.text('step.slot.noSlotShort') } </div> )
             }
             let slotsForItem = suggestedEvents[record.id];
             if ((slotsForItem.length === 0)) {
-                return ( <> No slots available </>)
+                return ( <div className="appBookingWarningText"> { ltext.text('step.slot.noSlotShort') } </div> )
             }
             let selected = false;
             let buttonClass = "appBookingTimeSlotButton";
