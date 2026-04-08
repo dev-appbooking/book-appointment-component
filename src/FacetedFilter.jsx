@@ -20,11 +20,11 @@ return (
             }
             return ( 
                 <div key={filterGroupItem.title_key} className="appBookingFacetGroup">
-                    <div> { ltext.text(filterGroupItem.title_key) } </div>
+                    <div className="appBookingFacetGroupHeader"> { ltext.text(filterGroupItem.title_key) } </div>
                     { filterGroupItem.values.map ((filterItem) => {
-                            return ( <div key={filterItem.id} className="mb-1 flex items-center"> 
-                                        <input className="size-4 inline-block" id={filterItem.id} type="checkbox" checked={ getCheckedValue(filterGroupItem, filterItem.id) } onChange={ () => { onChangeItem(filterGroupItem.id, filterItem.id) } } /> 
-                                        <label className="inline-block ml-1" htmlFor={filterItem.id} > { filterItem.value } </label> 
+                            return ( <div key={filterItem.id} className="appBookingFacetGroupItem"> 
+                                        <input className="" id={filterItem.id} type="checkbox" checked={ getCheckedValue(filterGroupItem, filterItem.id) } onChange={ () => { onChangeItem(filterGroupItem.id, filterItem.id) } } /> 
+                                        <label className="" htmlFor={filterItem.id} > { filterItem.value } </label> 
                                     </div>) 
                         })
                     }
