@@ -237,7 +237,7 @@ let ServicesWithNextAppSlot = function(props) {
                                 { slots.map( slot => {
                                     return ( <button className={buttonClass} type="button" key={slot.time} onClick={() => { onSelectServiceAnsSlot(item, slot) }}> { slot.time } </button> )
                                 }) }
-                                { hasMoreSlots && <button className="appBookingTimeSlotButton" type="button" onClick={() => { onSelectService(item) }}> ... </button> }
+                                { hasMoreSlots && <button className="appBookingMoreSlotsButton" type="button" onClick={() => { onSelectService(item) }}> { ltext.text('step.slot.showMore')} </button> }
                         </div>
             </div> );
         }

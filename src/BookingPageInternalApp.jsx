@@ -782,7 +782,7 @@ export function BookingPageInternalApp (props) {
                         <ChooseAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
                                             specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
                                             maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
-                                            initialSlotsPerDay={5}
+                                            initialSlotsPerDay={10}
                                             onSelectSlot={onSelectBookingSlot}
                                             selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
                                             ltext={ltext}
