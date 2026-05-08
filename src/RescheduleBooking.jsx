@@ -151,7 +151,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                         locationId={eventDetails.location ? eventDetails.location.id : eventDetails.locationId}
                         organizationId={organizationId}
                         maxDaysToShow={3}
-                        initialSlotsPerDay={5}
+                        initialSlotsPerDay={10}
                         onSelectSlot={onSelectSlot}
                         selectedBookingSlot={rescheduleData.selectedSlot}
                         ltext={ltext}
