@@ -17,6 +17,7 @@ import { configurableText } from './utils/Utils.js';
 import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
+import { ServicePrice } from './utils/Utils.js';
 import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 import { ServicesWithNextAppSlot } from './ServicesWithNextAppSlot.jsx';
 /*
@@ -382,7 +383,7 @@ export function BookingPageInternalApp (props) {
                         </div>
                     </div>
 
-                    <div className="appBokingServiceLineItem appBookingServicePrice"> { item.sku.price } { item.sku.currency } </div>
+                    <ServicePrice sku={ item.sku } />
                 </div>)
     }
 
@@ -645,7 +646,8 @@ export function BookingPageInternalApp (props) {
         (skus || []).forEach(skuWrapper => {
             if (!skuWrapper || !skuWrapper.sku || !skuWrapper.data) return;
 
-            if (String(skuWrapper.sku.skuid) === String(serviceSkuId)) {
+            // here we use the internal sku id (skuWrapper.sku.id) to match the serviceSkuId from the event, because the event only stores the internal sku id, not the human-readable skuid.
+            if (String(skuWrapper.sku.id) === String(serviceSkuId)) {
                 service = skuWrapper.sku;
 
                 skuWrapper.data.forEach(itemData => {

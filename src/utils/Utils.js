@@ -1,4 +1,22 @@
 
+export function ServicePrice({ sku }) {
+    let hasPromo = sku.type === 'SellableEventSku' && sku.original_price !== undefined
+        && parseFloat(sku.original_price) !== parseFloat(sku.price);
+
+    if (!hasPromo) {
+        return (
+            <div className="appBokingServiceLineItem appBookingServicePrice"> { sku.price } { sku.currency } </div>
+        )
+    }
+
+    return (
+        <div className="appBokingServiceLineItem appBookingServicePrice">
+            <span className="appBookingServiceOriginalPrice appBookingTextStrike appBookingTextNotImportant"> { sku.original_price } { sku.currency } </span>
+            <span className="appBookingServicePromoPrice"> { sku.price } { sku.currency } </span>
+        </div>
+    )
+}
+
 export function configurableText(textKey, appBookingConfigs, ltext) {
     if (appBookingConfigs && appBookingConfigs.text && appBookingConfigs.text[ltext.locale]) {
         // we have the texts for the current locale, check if we have the mentioned key

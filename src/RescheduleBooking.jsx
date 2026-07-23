@@ -7,6 +7,7 @@ import { ChooseAppSlot } from './ChooseAppSlot.jsx';
 import { httpRequest } from './HttpRequest';
 import { format } from 'date-fns';
 import { formatLocalizedDateTime } from './utils/formatters';
+import { ServicePrice } from './utils/Utils.js';
 
 export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, appBookingConfigs }) {
     const [rescheduleData, setRescheduleData] = useState({
@@ -90,13 +91,24 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
             ? `${eventDetails.specialist.title || ''} ${eventDetails.specialist.firstName || ''} ${eventDetails.specialist.lastName || ''}`.trim()
             : '-';
         const locationName = eventDetails.location ? `${eventDetails.location.name || ''}` : '-';
+        const serviceName = eventDetails.service ? eventDetails.service.name : '-';
 
         const title = ltext.textValue(ltext.text('reschedule.step.current'), stepIndex + 1);
 
         const dateTimeClass = "appBookingAttributesLine " + (rescheduleData.step === "reschedule_confirmation" ? "appBookingTextStrike appBookingTextNotImportant": "");
         return (
             <StepSummary title={title} showEdit={false} ltext={ltext}>
-                <div className="appBookingAttributesLine">
+                <div className="appBokingServiceLineItem appBookingServiceHeader">
+                    {serviceName}
+                </div>
+                { (!hideSpecialistName) && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
+                   {specialistName}
+                </div> }
+
+                { eventDetails.service && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
+                        <ServicePrice sku={ eventDetails.service } />
+                    </div> }
+                <div className="appBokingServiceLineItem">
                     {ltext.text('customer.name')}: {customer.name || '-'}
                 </div>
                 <div className="appBookingAttributesLine">
@@ -105,9 +117,6 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                 <div className="appBookingAttributesLine">
                     {ltext.text('customer.mobile')}: {customer.mobile || '-'}
                 </div>
-                { (!hideSpecialistName) && <div className="appBookingAttributesLine">
-                    {ltext.text('service.specialist')}: {specialistName}
-                </div> }
                 <div className="appBookingAttributesLine">
                     {ltext.text('service.address')}: {locationName}
                 </div>

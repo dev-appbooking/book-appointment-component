@@ -8,6 +8,7 @@ import { configurableText } from './utils/Utils.js';
 import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
+import { ServicePrice } from './utils/Utils.js';
 
 let ServicesWithNextAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
@@ -285,7 +286,7 @@ let ServicesWithNextAppSlot = function(props) {
                     </div>
                 </div>
             </div>
-            <div className="appBokingServiceLineItem appBookingServicePrice"> { item.sku.price } { item.sku.currency } </div>
+            <ServicePrice sku={ item.sku } />
 
             <div className="appBokingServiceLineItem"> 
                 { getAvailableSlots(item) }

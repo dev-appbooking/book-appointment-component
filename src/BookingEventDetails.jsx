@@ -1,6 +1,6 @@
 import { HorizontalBar } from './HorizontalBar.jsx';
 import { StepSummary } from './StepSummary.jsx';
-import { ClockIcon, LocationIcon, CalendarIcon } from './utils/Utils.js';
+import { ClockIcon, LocationIcon, CalendarIcon, ServicePrice } from './utils/Utils.js';
 
 export function BookingEventDetails({ details, ltext, onReschedule, onCancel, getRawTextByKey, appBookingConfigs }) {
     if (!details) {
@@ -30,10 +30,12 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
                             { serviceName }
                         </div>
 
-                        { (!hideSpecialistName) && ( <div className="appBokingServiceLineItem appBookingServiceSpecialist"> 
+                        { (!hideSpecialistName) && ( <div className="appBokingServiceLineItem appBookingServiceSpecialist">
                             { specialistName }
                         </div> ) }
-                        
+
+                        { details.service && <ServicePrice sku={ details.service } /> }
+
                         <div className="appBokingServiceLineItem">
                             <div className="appBookingServiceAttr">
                                 <div className="appBookingServiceAttrContent">
