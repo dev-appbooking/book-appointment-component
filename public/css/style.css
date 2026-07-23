@@ -141,6 +141,15 @@
 .appBookingServicePrice {
     color: #5b5b5b;
 }
+
+.appBookingServicePrice .appBookingServiceOriginalPrice {
+    margin-right: 8px;
+}
+
+.appBookingServicePrice .appBookingServicePromoPrice {
+    color: #a46622;
+    font-weight: bold;
+}
 .appBokingServiceLineItem {
     display: flex;
     flex-direction: row;
