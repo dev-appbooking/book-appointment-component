@@ -25,6 +25,9 @@ let ServicesWithNextAppSlot = function(props) {
     let oneServicePerSkuAndSpecialists = ((props.appBookingConfigs && props.appBookingConfigs.oneServicePerSkuAndSpecialists) ? props.appBookingConfigs.oneServicePerSkuAndSpecialists : false );
 
     props.allSkus.forEach( sku => {
+        if (props.restrictSkuId && String(sku.sku.skuid) !== String(props.restrictSkuId)) {
+            return;
+        }
         sku.data.forEach( (itemData, index) => {
             // check if the department from step 1 is set for this sku data
             let foundDepartment = false;
@@ -45,7 +48,7 @@ let ServicesWithNextAppSlot = function(props) {
                 return;
             }
             
-            let objSku = { id: `${sku.sku.id}_${itemData.location.id}_${itemData.specialist.id}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
+            let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemData.specialist.id}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
 
             if (!oneServicePerSkuAndSpecialists) {
                 specialists[itemData.specialist.id] =  { id:  itemData.specialist.id, value: props.specialistFullName(itemData.specialist) };
@@ -63,7 +66,7 @@ let ServicesWithNextAppSlot = function(props) {
                 // check if inScopeSkusData already has this sku and location
                 let foundSku = false;
                 for(let i=0; i< inScopeSkusData.length; i++) {
-                    if ((inScopeSkusData[i].sku.id === objSku.sku.id) && (inScopeSkusData[i].location.id === objSku.location.id)) {
+                    if ((inScopeSkusData[i].sku.skuid === objSku.sku.skuid) && (inScopeSkusData[i].location.id === objSku.location.id)) {
                         foundSku = true;
                         break;
                     }
@@ -73,8 +76,8 @@ let ServicesWithNextAppSlot = function(props) {
                 }
             }
 
-            if (objSku.sku.id === props.skuId && objSku.location.id === props.locationId && objSku.specialist.id === props.specialistId) {
-                selectedItemId = objSku.id;
+            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && objSku.specialist.id === props.specialistId) {
+                selectedItemId = objSku.sku.skuid;
             }
         });
     });
@@ -123,9 +126,11 @@ let ServicesWithNextAppSlot = function(props) {
             // we have the suggested events so sort services asc by the fisrt available slot
 
             skusArray.forEach( sku => {
+                // suggestedEvents is keyed by the composite client id sent in filterSkuData
+                // (`${skuid}_${locationId}_${specialistId}`), which is exactly sku.id here.
                 if (sku.id in suggestedEvents) {
                     if (suggestedEvents[sku.id].length === 0) {
-                        sku.firstSlot = null; 
+                        sku.firstSlot = null;
                     }
                     else {
                         let firstSlot = new Date(suggestedEvents[sku.id][0].startDate);

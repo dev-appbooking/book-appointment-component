@@ -117,13 +117,26 @@ $(document).ready( function() {
 
     const eventId = urlParams.get('eventId');
     const department = urlParams.get('department');
+    const skuid = urlParams.get('skuid');
+    const specialist = urlParams.get('specialist');
 
-    const initConfigs = { 
+    const utm_params = {
+                        utm_source: urlParams.get('utm_source'),
+                        utm_medium: urlParams.get('utm_medium'),
+                        utm_campaign: urlParams.get('utm_campaign'),
+    };
+
+    const initConfigs = {
                         integrationId: integrationId,
                         appBookingApiBaseUrl: "https://www.appBooking.ro",
                         locale: locale,
                         eventId: eventId,
-                        department: department,
+                        utm_params: utm_params,
+                        initialSelections: {
+                            department: department,
+                            skuid: skuid,
+                            specialist: specialist,
+                        },
                         configs: {
                                     step_personal_data: {
                                         mandatory_data: []
