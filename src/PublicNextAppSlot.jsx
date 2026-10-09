@@ -129,7 +129,7 @@ let PublicNextAppSlot = function(props) {
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     organizationId: props.organizationId
                 }
-                let res = await httpRequest('POST', props.apiBase + "/api/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {

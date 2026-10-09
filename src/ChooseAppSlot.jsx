@@ -160,7 +160,7 @@ let ChooseAppSlot = function(props) {
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     organizationId: props.organizationId
                 }
-                let res = await httpRequest('POST', props.apiBase + "/api/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
                 //set the selection as the first option 
                 if (props.selectedBookingSlot && props.selectedBookingSlot.slot.startDate) {

@@ -333,7 +333,7 @@ let ServicesWithNextAppSlot = function(props) {
                                             locationId: skuData.location.id
                                         });
                 });
-                let res = await httpRequest('POST', props.apiBase + "/api/appointment/nextFreeSlotWithFilter", bodyReq, { 'content-type': 'application/json'});
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {

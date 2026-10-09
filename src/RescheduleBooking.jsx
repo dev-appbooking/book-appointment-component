@@ -64,7 +64,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
             const res = await httpRequest(
                 'POST',
-                apiBase + `/api/event/booking/${eventDetails.id}/reschedule`,
+                apiBase + `/api/integration/${eventDetails.integrationId}/event/booking/${eventDetails.id}/reschedule`,
                 bodyReq,
                 { 'content-type': 'application/json' }
             );
@@ -155,6 +155,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                     <div className="appBookingStepTitle appBookingActiveStepTitle">{title}</div>
                     <ChooseAppSlot
                         apiBase={apiBase}
+                        integrationId={eventDetails.integrationId}
                         skuId={eventDetails.service ? eventDetails.service.id : eventDetails.serviceSkuId}
                         specialistId={eventDetails.specialist ? eventDetails.specialist.id : eventDetails.specialistId}
                         locationId={eventDetails.location ? eventDetails.location.id : eventDetails.locationId}
