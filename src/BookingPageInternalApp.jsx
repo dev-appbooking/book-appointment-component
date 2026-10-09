@@ -230,7 +230,7 @@ export function BookingPageInternalApp (props) {
                 
                 if (integrationId) {
                     setfetchData({  ...fetchData, fetching: true, status: 'not_fetched'});
-                    let skusObj = await httpRequest('GET', apiBase + '/api/bookingData/' + integrationId);
+                    let skusObj = await httpRequest('GET', apiBase + '/api/integration/' + integrationId + '/bookingData');
 
                     setfetchData({ fetching: false, status: 'success', data: skusObj.skus || [] });
                     let step = 'step_choose_service';
@@ -297,7 +297,7 @@ export function BookingPageInternalApp (props) {
                 setEventData({ fetching: true, status: 'not_fetched', data: null });
                 const bookingEvent = await httpRequest(
                     'GET',
-                    apiBase + '/api/event/booking/' + props.eventId
+                    apiBase + '/api/integration/' + props.integrationId + '/event/booking/' + props.eventId
                 );
                 setEventData({ fetching: false, status: 'success', data: { ...bookingEvent, id: props.eventId } });
             } catch (e) {
@@ -540,7 +540,7 @@ export function BookingPageInternalApp (props) {
                 utm_campaign: props.utm_params && props.utm_params.utm_campaign ? props.utm_params.utm_campaign : null
             
             }
-            let res = await httpRequest('POST', apiBase + "/api/appointment/booking", bodyReq, { 'content-type': 'application/json'});
+            let res = await httpRequest('POST', apiBase + "/api/integration/" + bookingData.integrationId + "/appointment/booking", bodyReq, { 'content-type': 'application/json'});
             setBookingData( { ...bookingData, step: 'step_confirmation', step_confirmation: { bookingConfirmationId: res.id },
                                                                 step_choose_department: { ...bookingData.step_choose_department, showEdit: false},
                                                                 step_choose_specialist: { ...bookingData.step_choose_specialist, showEdit: false},
@@ -696,7 +696,7 @@ export function BookingPageInternalApp (props) {
         try {
             let event = await httpRequest(
                 'POST',
-                apiBase + `/api/event/booking/${props.eventId}/cancel`,
+                apiBase + `/api/integration/${props.integrationId}/event/booking/${props.eventId}/cancel`,
                 { },
                 { 'content-type': 'application/json' }
             );
@@ -898,8 +898,9 @@ export function BookingPageInternalApp (props) {
                                          onChangeFacetedFilter={onChangeFacetedFilter}
                                          onSelectMoreSlots={onSelectMoreSlots}
                                          onSelectServiceAndSlot={onSelectServiceAndSlot}
-                                         filterSelections={bookingData.step_choose_service.filterSelections} 
+                                         filterSelections={bookingData.step_choose_service.filterSelections}
                                          apiBase={apiBase}
+                                         integrationId={bookingData.integrationId}
                                          organizationId={bookingData.organizationId}
                                          maxSlotsPerItem={2}
                                          ltext={ltext} 
@@ -922,7 +923,7 @@ export function BookingPageInternalApp (props) {
             return (
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
-                        <ChooseAppSlot apiBase={apiBase} skuId={bookingData.step_choose_service.skuId}
+                        <ChooseAppSlot apiBase={apiBase} integrationId={bookingData.integrationId} skuId={bookingData.step_choose_service.skuId}
                                             specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
                                             maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
                                             initialSlotsPerDay={10}
