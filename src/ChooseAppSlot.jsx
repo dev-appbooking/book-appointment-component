@@ -144,6 +144,8 @@ let ChooseAppSlot = function(props) {
                     )
                 } )
             }
+            { props.notice && ( <div className="appBookingSlotNotice appBookingWarningText"> { props.notice } </div> ) }
+            { props.children }
             </div>
         )
     }

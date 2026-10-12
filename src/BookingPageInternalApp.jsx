@@ -2,7 +2,7 @@ import * as React from 'react';
 import { LocalizationText } from './LocalizationText';
 import { localizationTexts } from './texts.js';
 import { CustomList } from './CustomList.jsx';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { httpRequest } from './HttpRequest';
 import { PublicNextAppSlot } from './PublicNextAppSlot.jsx';
 import { StandardCustomerForm } from './StandardCustomerForm.jsx';
@@ -20,6 +20,7 @@ import { XCircle } from './utils/Utils.js';
 import { ServicePrice } from './utils/Utils.js';
 import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 import { ServicesWithNextAppSlot } from './ServicesWithNextAppSlot.jsx';
+import { ReservationCountdown } from './ReservationCountdown.jsx';
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -57,6 +58,15 @@ export function BookingPageInternalApp (props) {
     const [eventData, setEventData] = useState({fetching: false, status: 'initial', data: null });
 
     const [eventMode, setEventMode] = useState( props.eventId ? 'view': 'standard');
+
+    // the hold on the selected slot: { id, expiresAt (ms) }
+    const [reservation, setReservation] = useState(null);
+    // text key of the warning shown above the slots, e.g. when the hold expired
+    const [slotNotice, setSlotNotice] = useState(null);
+    // changing it reloads the available slots
+    const [slotsRefreshKey, setSlotsRefreshKey] = useState(0);
+    const reservingRef = useRef(false);
+    const submittingRef = useRef(false);
 
 
     let apiBase = 'https://www.appbooking.ro';
@@ -321,17 +331,99 @@ export function BookingPageInternalApp (props) {
     }, [props.eventId]);
 
 
+    useEffect(() => {
+        if (!reservation) {
+            return;
+        }
+        let timer = setTimeout(() => {
+            // a booking in flight settles it: success books the slot, a 409 sends the user back
+            if (submittingRef.current) {
+                return;
+            }
+            returnToSlotStep('step.slot.reservationExpired');
+        }, Math.max(0, reservation.expiresAt - Date.now()));
+        return () => clearTimeout(timer);
+    }, [reservation]);
+
+    function isReservationValid(res) {
+        return !!res && (res.expiresAt > Date.now());
+    }
+
+    function releaseReservation(res) {
+        if (!isReservationValid(res)) {
+            return;
+        }
+        httpRequest('POST', apiBase + '/api/integration/' + bookingData.integrationId + '/event/reservation/' + encodeURIComponent(res.id) + '/cancel', {}, { 'content-type': 'application/json'})
+            .catch(() => { /* the hold expires on its own */ });
+    }
+
+    function dropReservation() {
+        releaseReservation(reservation);
+        setReservation(null);
+        setSlotNotice(null);
+    }
+
+    function returnToSlotStep(noticeKey, serviceChanges) {
+        setReservation(null);
+        setSlotNotice(noticeKey);
+        setSlotsRefreshKey(k => k + 1);
+        setBookingData(prev => ({ ...prev, step: 'step_choose_slot',
+                                    step_choose_slot: { ...prev.step_choose_slot, bookingSlot: null },
+                                    step_choose_service: { ...prev.step_choose_service, ...serviceChanges } }));
+    }
+
+    function isSameSlot(a, b) {
+        return !!a && !!b && (a.slot.startDate === b.slot.startDate) && (a.slot.scheduleId === b.slot.scheduleId);
+    }
+
+    /*
+    Holds the chosen slot before moving on to the personal data step. Any previous hold is released
+    first. serviceChanges is applied to step_choose_service when the slot was picked from the service list.
+    */
+    async function reserveSlot(slot, serviceChanges) {
+        if (reservingRef.current) {
+            return;
+        }
+        let goToPersonalData = () => setBookingData(prev => ({ ...prev, step: 'step_personal_data',
+                                    step_choose_slot: { ...prev.step_choose_slot, bookingSlot: slot },
+                                    step_choose_service: { ...prev.step_choose_service, ...serviceChanges } }));
+
+        let sameService = !serviceChanges || ((serviceChanges.skuId === bookingData.step_choose_service.skuId) &&
+                                              (serviceChanges.specialistId === bookingData.step_choose_service.specialistId) &&
+                                              (serviceChanges.locationId === bookingData.step_choose_service.locationId));
+        if (sameService && isReservationValid(reservation) && isSameSlot(slot, bookingData.step_choose_slot.bookingSlot)) {
+            // the user picked the slot they already hold
+            setSlotNotice(null);
+            goToPersonalData();
+            return;
+        }
+
+        reservingRef.current = true;
+        releaseReservation(reservation);
+        setReservation(null);
+        try {
+            let res = await httpRequest('POST', apiBase + '/api/integration/' + bookingData.integrationId + '/event/reservation', { token: slot.slot.token }, { 'content-type': 'application/json'});
+            setReservation({ id: res.id, expiresAt: new Date(res.expires_at).getTime() });
+            setSlotNotice(null);
+            goToPersonalData();
+        } catch (e) {
+            // 409: taken or held by someone else, 400: the slot token is no longer valid
+            let noticeKey = ([400, 409].includes(e && e.status)) ? 'step.slot.unavailable' : 'error.generic';
+            returnToSlotStep(noticeKey, serviceChanges);
+        } finally {
+            reservingRef.current = false;
+        }
+    }
+
     function onSelectMoreSlots(serviceItem) {
+        dropReservation();
         setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
     }
 
     function onSelectServiceAndSlot(serviceItem, slot) {
-        setBookingData( { ...bookingData, step: 'step_personal_data', 
-                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: slot },
-                    step_choose_service: { ...bookingData.step_choose_service, skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} }
-                } );
+        reserveSlot(slot, { skuId: serviceItem.sku.id, specialistId: serviceItem.specialist.id, locationId: serviceItem.location.id, filterSelections: {} });
     }
 
     function getSpecialistFullName( item ) {
@@ -430,6 +522,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function onSelectDepartment(departmentItem, index) {
+        dropReservation();
         let step = 'step_choose_specialist';
         if (bookingData.steps.indexOf('step_choose_specialist') < 0) {
             step = 'step_choose_service';
@@ -442,6 +535,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function onSelectSpecialist(specialistItem, index) {
+        dropReservation();
         setBookingData( { ...bookingData, step: 'step_choose_service', step_choose_specialist: {  ...bookingData.step_choose_specialist, specialistId: specialistItem.id },
                                                    step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
@@ -449,7 +543,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function onSelectBookingSlot(slot) {
-        setBookingData( { ...bookingData, step: 'step_personal_data', step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: slot } } );
+        reserveSlot(slot);
     }
 
     function onChangeCustomerData(property, e) {
@@ -520,27 +614,33 @@ export function BookingPageInternalApp (props) {
 
     async function createBooking() {
 
+        if (!isReservationValid(reservation)) {
+            returnToSlotStep('step.slot.reservationExpired');
+            return;
+        }
+
         try {
 
+            submittingRef.current = true;
             setBookingStatus({ submit: true, status: 'not_created' });
             let bodyReq = {
-                serviceSkuId: bookingData.step_choose_service.skuId,
-                integrationId: bookingData.integrationId,
-                specialistId: bookingData.step_choose_service.specialistId,
-                scheduleId: bookingData.step_choose_slot.bookingSlot.slot.scheduleId,
+                reservationId: reservation.id,
+                customData: {
+                    name: bookingData.step_personal_data.name,
+                    mobile: bookingData.step_personal_data.mobile,
+                    email: bookingData.step_personal_data.email
+                },
                 bookingDate: bookingData.step_choose_slot.bookingSlot.slot.startDate,
                 timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                name: bookingData.step_personal_data.name,
                 language: ltext.locale,
-                mobile: bookingData.step_personal_data.mobile,
-                email: bookingData.step_personal_data.email,
-                
+
                 utm_source: props.utm_params && props.utm_params.utm_source ? props.utm_params.utm_source : null,
                 utm_medium: props.utm_params && props.utm_params.utm_medium ? props.utm_params.utm_medium : null,
                 utm_campaign: props.utm_params && props.utm_params.utm_campaign ? props.utm_params.utm_campaign : null
-            
+
             }
-            let res = await httpRequest('POST', apiBase + "/api/integration/" + bookingData.integrationId + "/appointment/booking", bodyReq, { 'content-type': 'application/json'});
+            let res = await httpRequest('POST', apiBase + "/api/integration/" + bookingData.integrationId + "/appointment/fromReservation", bodyReq, { 'content-type': 'application/json'});
+            setReservation(null);
             setBookingData( { ...bookingData, step: 'step_confirmation', step_confirmation: { bookingConfirmationId: res.id },
                                                                 step_choose_department: { ...bookingData.step_choose_department, showEdit: false},
                                                                 step_choose_specialist: { ...bookingData.step_choose_specialist, showEdit: false},
@@ -549,11 +649,20 @@ export function BookingPageInternalApp (props) {
             setBookingStatus({ submit: false, status: 'success' });
 
         } catch (e) {
-            setBookingStatus({ submit: false, status: 'error' });
+            if ((e && e.status === 409) || !isReservationValid(reservation)) {
+                // the hold expired or the slot can no longer be booked
+                setBookingStatus({ submit: false, status: 'initial' });
+                returnToSlotStep('step.slot.reservationExpired');
+            } else {
+                setBookingStatus({ submit: false, status: 'error' });
+            }
+        } finally {
+            submittingRef.current = false;
         }
     }
 
     function onEditStepChooseDepartment() {
+        dropReservation();
         setBookingData( { ...bookingData, step: 'step_choose_department', 
                                                 step_choose_specialist: { ...bookingData.step_choose_specialist, specialistId: null },   
                                                 step_choose_service: { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
@@ -562,6 +671,7 @@ export function BookingPageInternalApp (props) {
     }
 
     function onEditStepChooseSpecialist() {
+        dropReservation();
         setBookingData( { ...bookingData, step: 'step_choose_specialist', 
                                                 step_choose_service: { ...bookingData.step_choose_service, specialistId: null, skuId: null, locationId: null, filterSelections: {} },
                                                 step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }, step_confirmation: { bookingConfirmationId: null }
@@ -569,7 +679,8 @@ export function BookingPageInternalApp (props) {
     }
 
     function onEditStepChooseService() {
-        setBookingData( { ...bookingData, step: 'step_choose_service', 'step_choose_service': { ...bookingData.step_choose_service, bookingSlot: null }, 'step_confirmation': { bookingConfirmationId: null }
+        dropReservation();
+        setBookingData( { ...bookingData, step: 'step_choose_service', 'step_choose_slot': { ...bookingData.step_choose_slot, bookingSlot: null }, 'step_confirmation': { bookingConfirmationId: null }
                         } );
     }
 
@@ -918,20 +1029,30 @@ export function BookingPageInternalApp (props) {
         }
     }
 
+    function reservationCountdown() {
+        if (!reservation || (bookingData.step === 'step_confirmation')) {
+            return null;
+        }
+        return (<ReservationCountdown expiresAt={reservation.expiresAt} text={getRawTextByKey('step.slot.reservationHeldFor')} />);
+    }
+
     function contentForStep_dateAndTime(stepIndex) {
         if ((bookingData.step === 'step_choose_slot') && bookingData.step_choose_service.skuId) {
             return (
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(getRawTextByKey('step.slot'), stepIndex + 1) } </div>
-                        <ChooseAppSlot apiBase={apiBase} integrationId={bookingData.integrationId} skuId={bookingData.step_choose_service.skuId}
+                        <ChooseAppSlot key={slotsRefreshKey} apiBase={apiBase} integrationId={bookingData.integrationId} skuId={bookingData.step_choose_service.skuId}
                                             specialistId={bookingData.step_choose_service.specialistId} locationId={bookingData.step_choose_service.locationId} organizationId={bookingData.organizationId}
                                             maxDaysToShow={ props.configs.maxDaysToShow ? props.configs.maxDaysToShow : 3 }
                                             initialSlotsPerDay={10}
                                             onSelectSlot={onSelectBookingSlot}
                                             selectedBookingSlot={bookingData.step_choose_slot.bookingSlot}
+                                            notice={slotNotice ? getRawTextByKey(slotNotice) : null}
                                             ltext={ltext}
                                             rawTextByKey={getRawTextByKey}
-                        />
+                        >
+                            { reservationCountdown() }
+                        </ChooseAppSlot>
                     </div>
             )
         } else if ((bookingData.step != 'step_choose_slot') && bookingData.step_choose_slot.bookingSlot) {
@@ -946,6 +1067,7 @@ export function BookingPageInternalApp (props) {
             return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}>
                         <div className="appBookingAttributesLine">{pretty}</div>
                         <div className="appBookingAttributesLine"> {timeStr} </div>
+                        { reservationCountdown() }
                     </StepSummary>)
         } else {
             return (

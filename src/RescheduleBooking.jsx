@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BookingSummary } from './BookingSummary.jsx';
 import { StepSummary } from './StepSummary.jsx';
 import { PublicNextAppSlot } from './PublicNextAppSlot.jsx';
@@ -8,6 +8,7 @@ import { httpRequest } from './HttpRequest';
 import { format } from 'date-fns';
 import { formatLocalizedDateTime } from './utils/formatters';
 import { ServicePrice } from './utils/Utils.js';
+import { ReservationCountdown } from './ReservationCountdown.jsx';
 
 export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, appBookingConfigs }) {
     const [rescheduleData, setRescheduleData] = useState({
@@ -23,8 +24,80 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     });
     const hideSpecialistName = appBookingConfigs.showSpecialistNameOnServiceItem === false ;
 
-    function onSelectSlot(slot) {
-        setRescheduleData({ ...rescheduleData, selectedSlot: slot });
+    // the hold on the selected slot: { id, expiresAt (ms) }
+    const [reservation, setReservation] = useState(null);
+    // text key of the warning shown above the slots, e.g. when the hold expired
+    const [slotNotice, setSlotNotice] = useState(null);
+    // changing it reloads the available slots
+    const [slotsRefreshKey, setSlotsRefreshKey] = useState(0);
+    const reservingRef = useRef(false);
+    const submittingRef = useRef(false);
+
+    const integrationId = eventDetails.integrationId;
+
+    useEffect(() => {
+        if (!reservation) {
+            return;
+        }
+        let timer = setTimeout(() => {
+            // a reschedule in flight settles it: success moves the booking, a 409 sends the user back
+            if (submittingRef.current) {
+                return;
+            }
+            returnToSlotChoice('step.slot.reservationExpired');
+        }, Math.max(0, reservation.expiresAt - Date.now()));
+        return () => clearTimeout(timer);
+    }, [reservation]);
+
+    function isReservationValid(res) {
+        return !!res && (res.expiresAt > Date.now());
+    }
+
+    function releaseReservation(res) {
+        if (!isReservationValid(res)) {
+            return;
+        }
+        httpRequest('POST', apiBase + `/api/integration/${integrationId}/event/reservation/${encodeURIComponent(res.id)}/cancel`, {}, { 'content-type': 'application/json' })
+            .catch(() => { /* the hold expires on its own */ });
+    }
+
+    function returnToSlotChoice(noticeKey) {
+        setReservation(null);
+        setSlotNotice(noticeKey);
+        setSlotsRefreshKey(k => k + 1);
+        setRescheduleData(prev => ({ ...prev, step: 'reschedule_choose_slot', selectedSlot: null }));
+    }
+
+    function isSameSlot(a, b) {
+        return !!a && !!b && (a.slot.startDate === b.slot.startDate) && (a.slot.scheduleId === b.slot.scheduleId);
+    }
+
+    /*
+    Holds the chosen slot so the booking can be moved onto it. Any previous hold is released first.
+    */
+    async function onSelectSlot(slot) {
+        if (reservingRef.current) {
+            return;
+        }
+        if (isReservationValid(reservation) && isSameSlot(slot, rescheduleData.selectedSlot)) {
+            return;
+        }
+
+        reservingRef.current = true;
+        releaseReservation(reservation);
+        setReservation(null);
+        setRescheduleData(prev => ({ ...prev, selectedSlot: null }));
+        try {
+            let res = await httpRequest('POST', apiBase + `/api/integration/${integrationId}/event/reservation`, { token: slot.slot.token }, { 'content-type': 'application/json' });
+            setReservation({ id: res.id, expiresAt: new Date(res.expires_at).getTime() });
+            setSlotNotice(null);
+            setRescheduleData(prev => ({ ...prev, selectedSlot: slot }));
+        } catch (e) {
+            // 409: taken or held by someone else, 400: the slot token is no longer valid
+            returnToSlotChoice(([400, 409].includes(e && e.status)) ? 'step.slot.unavailable' : 'error.generic');
+        } finally {
+            reservingRef.current = false;
+        }
     }
 
     function onToggleTerms(e) {
@@ -39,6 +112,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     function canSubmit() {
         return (
             !!rescheduleData.selectedSlot &&
+            !!reservation &&
             rescheduleData.acceptTerms &&
             !rescheduleStatus.submit
         );
@@ -48,26 +122,29 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         if (!rescheduleData.selectedSlot || !eventDetails) {
             return;
         }
+        if (!isReservationValid(reservation)) {
+            returnToSlotChoice('step.slot.reservationExpired');
+            return;
+        }
 
         try {
+            submittingRef.current = true;
             setRescheduleStatus(prev => ({ ...prev, submit: true, status: 'not_created' }));
 
             const bodyReq = {
-                integrationId: eventDetails.integrationId,
-                serviceSkuId: eventDetails.serviceSkuId,
-                specialistId: eventDetails.specialistId,
-                scheduleId: rescheduleData.selectedSlot.slot.scheduleId,
+                reservationId: reservation.id,
                 bookingDate: rescheduleData.selectedSlot.slot.startDate,
-                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: ltext.locale
             };
-
 
             const res = await httpRequest(
                 'POST',
-                apiBase + `/api/integration/${eventDetails.integrationId}/event/booking/${eventDetails.id}/reschedule`,
+                apiBase + `/api/integration/${integrationId}/event/booking/${eventDetails.id}/rescheduleFromReservation`,
                 bodyReq,
                 { 'content-type': 'application/json' }
             );
+            setReservation(null);
 
             setRescheduleStatus({
                 submit: false,
@@ -76,12 +153,20 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
             });
             setRescheduleData(prev => ({ ...prev, step: 'reschedule_confirmation' }));
         } catch (e) {
+            if ((e && e.status === 409) || !isReservationValid(reservation)) {
+                // the hold expired or the slot can no longer be booked
+                setRescheduleStatus({ submit: false, status: 'initial', confirmationId: null });
+                returnToSlotChoice('step.slot.reservationExpired');
+                return;
+            }
             setRescheduleStatus({
                 submit: false,
                 status: 'error',
                 confirmationId: null
             });
             setRescheduleData(prev => ({ ...prev, step: 'reschedule_confirmation' }));
+        } finally {
+            submittingRef.current = false;
         }
     }
 
@@ -154,6 +239,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                 <div>
                     <div className="appBookingStepTitle appBookingActiveStepTitle">{title}</div>
                     <ChooseAppSlot
+                        key={slotsRefreshKey}
                         apiBase={apiBase}
                         integrationId={eventDetails.integrationId}
                         skuId={eventDetails.service ? eventDetails.service.id : eventDetails.serviceSkuId}
@@ -164,9 +250,14 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                         initialSlotsPerDay={10}
                         onSelectSlot={onSelectSlot}
                         selectedBookingSlot={rescheduleData.selectedSlot}
+                        notice={slotNotice ? getRawTextByKey(slotNotice) : null}
                         ltext={ltext}
                         rawTextByKey={getRawTextByKey}
-                    />
+                    >
+                        { reservation && (
+                            <ReservationCountdown expiresAt={reservation.expiresAt} text={getRawTextByKey('step.slot.reservationHeldFor')} />
+                        )}
+                    </ChooseAppSlot>
 
                     <div className="appBookingTermsContainer">
                         <fieldset className="appBookingFormFieldSet">

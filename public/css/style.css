@@ -284,6 +284,14 @@
 .appBookingWarningText {
     color: #d96724;
 }
+.appBookingSlotNotice,
+.appBookingReservationTimer {
+    padding-top: 16px;
+}
+.appBookingReservationTimerValue {
+    font-size: 1.25em;
+    font-weight: bold;
+}
 
 .appBookingFormInputCheckbox {
     width: 20px;
