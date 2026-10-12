@@ -69,7 +69,8 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     }
 
     function isSameSlot(a, b) {
-        return !!a && !!b && (a.slot.startDate === b.slot.startDate) && (a.slot.scheduleId === b.slot.scheduleId);
+        const schedules = (slot) => (slot.scheduleIds || [slot.scheduleId]).join(',');
+        return !!a && !!b && (a.slot.startDate === b.slot.startDate) && (schedules(a.slot) === schedules(b.slot));
     }
 
     /*
@@ -186,8 +187,11 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                 <div className="appBokingServiceLineItem appBookingServiceHeader">
                     {serviceName}
                 </div>
-                { (!hideSpecialistName) && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
+                { (!hideSpecialistName) && (eventDetails.specialist || eventDetails.specialistId) && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
                    {specialistName}
+                </div> }
+                { (eventDetails.assignedNames || []).length > 0 && <div className="appBokingServiceLineItem appBookingAssignedResources">
+                   {ltext.text('service.assigned')}: {eventDetails.assignedNames.join(', ')}
                 </div> }
 
                 { eventDetails.service && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
@@ -244,7 +248,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                         integrationId={eventDetails.integrationId}
                         skuId={eventDetails.service ? eventDetails.service.id : eventDetails.serviceSkuId}
                         specialistId={eventDetails.specialist ? eventDetails.specialist.id : eventDetails.specialistId}
-                        locationId={eventDetails.location ? eventDetails.location.id : eventDetails.locationId}
+                        scheduleIds={eventDetails.scheduleIds}
                         organizationId={organizationId}
                         maxDaysToShow={3}
                         initialSlotsPerDay={10}

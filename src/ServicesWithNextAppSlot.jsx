@@ -44,15 +44,19 @@ let ServicesWithNextAppSlot = function(props) {
                 return;
             }
 
-            if (props.specialistId && ((props.specialistId !== itemData.specialist.id) && (props.specialistId !== props.specialistAnyID)))
+            let itemSpecialistId = itemData.specialist ? itemData.specialist.id : null;
+            if (props.specialistId && ((props.specialistId !== itemSpecialistId) && (props.specialistId !== props.specialistAnyID)))
             {
                 return;
             }
             
-            let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemData.specialist.id}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
+            let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemSpecialistId}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist,
+                           scheduleIds: itemData.scheduleIds || [] };
 
             if (!oneServicePerSkuAndSpecialists) {
-                specialists[itemData.specialist.id] =  { id:  itemData.specialist.id, value: props.specialistFullName(itemData.specialist) };
+                if (itemData.specialist) {
+                    specialists[itemSpecialistId] =  { id:  itemSpecialistId, value: props.specialistFullName(itemData.specialist) };
+                }
                 objSku.specialist = itemData.specialist;
             } else {
                 objSku.specialist = { id: null };
@@ -68,6 +72,8 @@ let ServicesWithNextAppSlot = function(props) {
                 let foundSku = false;
                 for(let i=0; i< inScopeSkusData.length; i++) {
                     if ((inScopeSkusData[i].sku.skuid === objSku.sku.skuid) && (inScopeSkusData[i].location.id === objSku.location.id)) {
+                        // one item for all the specialists, so its slots come from all their schedules
+                        inScopeSkusData[i].scheduleIds = Array.from(new Set([ ...inScopeSkusData[i].scheduleIds, ...objSku.scheduleIds ]));
                         foundSku = true;
                         break;
                     }
@@ -77,7 +83,7 @@ let ServicesWithNextAppSlot = function(props) {
                 }
             }
 
-            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && objSku.specialist.id === props.specialistId) {
+            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && (objSku.specialist ? objSku.specialist.id : null) === props.specialistId) {
                 selectedItemId = objSku.sku.skuid;
             }
         });
@@ -162,7 +168,7 @@ let ServicesWithNextAppSlot = function(props) {
         }
         let result = [];
         skus.forEach( sku => {
-            if (filterSelections['specialists'] && (! filterSelections['specialists'][sku.specialist.id])) {
+            if (filterSelections['specialists'] && (! sku.specialist || ! filterSelections['specialists'][sku.specialist.id])) {
                 return; // the specialist for this sku is not selected in the filter so just return
             }
             if (filterSelections['locations'] && (! filterSelections['locations'][sku.location.id])) {
@@ -197,7 +203,7 @@ let ServicesWithNextAppSlot = function(props) {
     function serviceItemContent(item, isSelected) {
     
         function getSpecialistContent() {
-            if (props.configs && (props.configs.showSpecialistNameOnServiceItem === false)) {
+            if ((props.configs && (props.configs.showSpecialistNameOnServiceItem === false)) || !props.specialistFullName(item.specialist)) {
                 return;
             }
             return (
@@ -328,12 +334,16 @@ let ServicesWithNextAppSlot = function(props) {
                 }
                 inScopeSkusData.forEach( skuData => {
                     bodyReq.filterSkuData.push( { id: skuData.id,
-                                            serviceSkuId: skuData.sku.id,
-                                            specialistId: skuData.specialist.id,
-                                            locationId: skuData.location.id
+                                            skuId: skuData.sku.id,
+                                            scheduleIds: skuData.scheduleIds
                                         });
                 });
-                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter", bodyReq, { 'content-type': 'application/json'});
+                if (bodyReq.filterSkuData.length === 0) {
+                    setSuggestedEvents({});
+                    setFetchingData({ fetching: false, status: 'success' });
+                    return;
+                }
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {

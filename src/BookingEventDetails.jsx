@@ -30,8 +30,12 @@ export function BookingEventDetails({ details, ltext, onReschedule, onCancel, ge
                             { serviceName }
                         </div>
 
-                        { (!hideSpecialistName) && ( <div className="appBokingServiceLineItem appBookingServiceSpecialist">
+                        { (!hideSpecialistName) && (details.specialist || details.specialistId) && ( <div className="appBokingServiceLineItem appBookingServiceSpecialist">
                             { specialistName }
+                        </div> ) }
+
+                        { (details.assignedNames || []).length > 0 && ( <div className="appBokingServiceLineItem appBookingAssignedResources">
+                            { ltext.text('service.assigned') }: { details.assignedNames.join(', ') }
                         </div> ) }
 
                         { details.service && <ServicePrice sku={ details.service } /> }
