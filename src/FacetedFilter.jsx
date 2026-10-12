@@ -8,7 +8,7 @@ function onChangeItem(filterGroupId, filterItemId) {
 }
 
 function getCheckedValue(filterGroupId, filterItemId) {
-    return props.filterData.filterSelections[filterGroupId] && props.filterData.filterSelections[filterGroupId][filterItemId];
+    return !!(props.filterData.filterSelections[filterGroupId] && props.filterData.filterSelections[filterGroupId][filterItemId]);
 }
 
 return (
@@ -22,9 +22,11 @@ return (
                 <div key={filterGroupItem.title_key} className="appBookingFacetGroup">
                     <div className="appBookingFacetGroupHeader"> { ltext.text(filterGroupItem.title_key) } </div>
                     { filterGroupItem.values.map ((filterItem) => {
+                            // ids of different groups (a specialist and a resource) can be equal, so the group is part of the element id
+                            const inputId = `${filterGroupItem.id}_${filterItem.id}`;
                             return ( <div key={filterItem.id} className="appBookingFacetGroupItem"> 
-                                        <input className="" id={filterItem.id} type="checkbox" checked={ getCheckedValue(filterGroupItem, filterItem.id) } onChange={ () => { onChangeItem(filterGroupItem.id, filterItem.id) } } /> 
-                                        <label className="" htmlFor={filterItem.id} > { filterItem.value } </label> 
+                                        <input className="" id={inputId} type="checkbox" checked={ getCheckedValue(filterGroupItem.id, filterItem.id) } onChange={ () => { onChangeItem(filterGroupItem.id, filterItem.id) } } /> 
+                                        <label className="" htmlFor={inputId} > { filterItem.value } </label> 
                                     </div>) 
                         })
                     }

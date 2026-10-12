@@ -9,6 +9,7 @@ import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
 import { ServicePrice } from './utils/Utils.js';
+import { optionResources, scheduleIdsForResources } from './utils/bookingData.js';
 
 let ServicesWithNextAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
@@ -18,6 +19,7 @@ let ServicesWithNextAppSlot = function(props) {
     let ltext = props.ltext;
     let specialists = {};
     let locations = {};
+    let resources = {};
     let services = { };
     let inScopeSkusData = [];
     let selectedItemId = null;
@@ -51,7 +53,7 @@ let ServicesWithNextAppSlot = function(props) {
             }
             
             let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemSpecialistId}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist,
-                           scheduleIds: itemData.scheduleIds || [] };
+                           scheduleIds: itemData.scheduleIds || [], resourceSchedules: itemData.resourceSchedules || [] };
 
             if (!oneServicePerSkuAndSpecialists) {
                 if (itemData.specialist) {
@@ -63,6 +65,9 @@ let ServicesWithNextAppSlot = function(props) {
             }
 
             locations[itemData.location.id] = { id: itemData.location.id, value: `${itemData.location.name} (${itemData.location.city})` };
+            optionResources(itemData).forEach( resource => {
+                resources[resource.id] = { id: resource.id, value: resource.name || String(resource.id) };
+            });
             services[sku.sku.name] = { id: sku.sku.name, value: sku.sku.name };
 
             if (!oneServicePerSkuAndSpecialists) {
@@ -90,6 +95,15 @@ let ServicesWithNextAppSlot = function(props) {
     });
     if (!selectedItemId && (props.specialistId === props.specialistAnyID)) {
         
+    }
+
+    // filtering on resources narrows the slot search of every service to the selected resources
+    let resourceSelection = props.filterSelections && props.filterSelections['resources'];
+    if (resourceSelection) {
+        inScopeSkusData = inScopeSkusData.map( objSku => {
+            let scheduleIds = scheduleIdsForResources(objSku, resourceSelection);
+            return scheduleIds ? { ...objSku, scheduleIds: scheduleIds } : null;
+        }).filter(Boolean);
     }
 
     function selectSlot(slot) {
@@ -124,7 +138,7 @@ let ServicesWithNextAppSlot = function(props) {
     }
 
     function filteredServices(skus, filterSelections) {
-        // filterSelections is an object whos keys are 'specialists', 'locations', 'services' and each of these map with on object who's keys are the filter selections (ids)
+        // filterSelections is an object whos keys are 'specialists', 'locations', 'resources', 'services' and each of these map with on object who's keys are the filter selections (ids)
         
         function sortByFirstAvailableSlot(skusArray) {
             if (Object.keys(suggestedEvents).length === 0) {
@@ -302,9 +316,10 @@ let ServicesWithNextAppSlot = function(props) {
     }
 
     function getServicesContent() {
-        let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1);
+        let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1) || (Object.keys(resources).length > 1);
         let filterData = { items: props.allSkus, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
                                                                 { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) },
+                                                                { id: 'resources', title_key: 'filter.resources', values: Object.values(resources) },
                                                                 { id: 'services', title_key: 'filter.services', values: Object.values(services) } ],
                                 filterSelections: props.filterSelections
                             } ;
@@ -350,7 +365,7 @@ let ServicesWithNextAppSlot = function(props) {
                 setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
-    }, [props.skuId, props.locationId, props.specialistId, props.startDate] );
+    }, [props.skuId, props.locationId, props.specialistId, props.startDate, Object.keys(resourceSelection || {}).sort().join(',')] );
 
     return (<>
         { !fetchingData.fetching && getServicesContent() }

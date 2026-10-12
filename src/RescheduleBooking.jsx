@@ -7,7 +7,7 @@ import { ChooseAppSlot } from './ChooseAppSlot.jsx';
 import { httpRequest } from './HttpRequest';
 import { format } from 'date-fns';
 import { formatLocalizedDateTime } from './utils/formatters';
-import { ServicePrice } from './utils/Utils.js';
+import { ServicePrice, hasPrice } from './utils/Utils.js';
 import { ReservationCountdown } from './ReservationCountdown.jsx';
 
 export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, appBookingConfigs }) {
@@ -194,7 +194,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
                    {ltext.text('service.assigned')}: {eventDetails.assignedNames.join(', ')}
                 </div> }
 
-                { eventDetails.service && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
+                { eventDetails.service && hasPrice(eventDetails.service) && <div className="appBokingServiceLineItem appBookingServiceSpecialist">
                         <ServicePrice sku={ eventDetails.service } />
                     </div> }
                 <div className="appBokingServiceLineItem">

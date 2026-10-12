@@ -21,7 +21,7 @@ import { ServicePrice } from './utils/Utils.js';
 import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 import { ServicesWithNextAppSlot } from './ServicesWithNextAppSlot.jsx';
 import { ReservationCountdown } from './ReservationCountdown.jsx';
-import { bookingOptionsFromV2, buildCatalog, assignedOwnerNames, specialistFullName } from './utils/bookingData.js';
+import { bookingOptionsFromV2, buildCatalog, assignedOwnerNames, slotOwnerNames, specialistFullName } from './utils/bookingData.js';
 /*
 This booking Page can have several steps depending on what services are setup.
 */
@@ -94,18 +94,56 @@ export function BookingPageInternalApp (props) {
         return Object.keys(resDepartments).length;
     }
 
-    function integrationCountSpecialists(skus) {
+    /*
+    Counts the specialists of the services in scope: optionally only the ones in the department
+    and of the sku the flow is restricted to (human-readable skuid).
+    */
+    function integrationCountSpecialists(skus, departmentId, restrictSkuId) {
         let resSpecialists = { } ;
         skus = skus || [];
         skus.forEach ( sku => {
+            if (restrictSkuId && String(sku.sku.skuid) !== String(restrictSkuId)) {
+                return;
+            }
             let skuDataArray = sku.data || [];
             skuDataArray.forEach ( skuData => {
-                if (skuData.specialist) {
-                    resSpecialists[skuData.specialist.id] = true;
+                if (!skuData.specialist) {
+                    return;
                 }
+                if (departmentId && !(skuData.departments || []).some( d => d.id === departmentId )) {
+                    return;
+                }
+                resSpecialists[skuData.specialist.id] = true;
             });
         });
         return Object.keys(resSpecialists).length;
+    }
+
+    // true when a service in scope is booked without a specialist (on resources only)
+    function hasSkusWithoutSpecialist(skus, departmentId, restrictSkuId) {
+        return (skus || []).some( sku => {
+            if (restrictSkuId && String(sku.sku.skuid) !== String(restrictSkuId)) {
+                return false;
+            }
+            return (sku.data || []).some( skuData => !skuData.specialist &&
+                        (!departmentId || (skuData.departments || []).some( d => d.id === departmentId )) );
+        });
+    }
+
+    /*
+    The steps of the flow. The specialist step is left out when it is hidden by the configs, when
+    no service in scope has a specialist, or when some service in scope has none.
+    */
+    function stepsFor(skus, departmentId, restrictSkuId) {
+        let steps = ['step_choose_service', 'step_choose_slot', 'step_personal_data', 'step_confirmation'];
+        let hideSpecialists = props.configs.step_choose_specialist && props.configs.step_choose_specialist.hide === true;
+        if (!hideSpecialists && (integrationCountSpecialists(skus, departmentId, restrictSkuId) > 0) && !hasSkusWithoutSpecialist(skus, departmentId, restrictSkuId)) {
+            steps.unshift('step_choose_specialist');
+        }
+        if (bookingData.step_choose_department && integrationCountDepartments(skus) > 1) {
+            steps.unshift('step_choose_department');
+        }
+        return steps;
     }
 
     /*
@@ -257,15 +295,7 @@ export function BookingPageInternalApp (props) {
                     }
                     let hasMoreSpecialists = integrationCountSpecialists(skus) > 1;
 
-                    let steps = ['step_choose_specialist', 'step_choose_service', 'step_choose_slot', 'step_personal_data', 'step_confirmation'];
-
-                    if (props.configs.step_choose_specialist && props.configs.step_choose_specialist.hide === true) {
-                        steps.splice(0, 1);
-                    }
-
-                    if (bookingData.step_choose_department && hasDepartments) {
-                        steps.unshift('step_choose_department');
-                    }
+                    let steps = stepsFor(skus, null, null);
 
                     let departmentId = null;
                     let specialistId = null;
@@ -283,6 +313,11 @@ export function BookingPageInternalApp (props) {
                         locationId = preselection.locationId;
                         scheduleIds = preselection.scheduleIds || [];
                         restrictSkuId = preselection.restrictSkuId;
+                        // the preselected department or sku may have no specialists to choose from
+                        steps = stepsFor(skus, departmentId, restrictSkuId);
+                        if (steps.indexOf(step) < 0) {
+                            step = 'step_choose_service';
+                        }
                     }
 
                     setBookingData( { ...bookingData, integrationId: integrationId, organizationId: (skus[0].sku.organizationId),
@@ -456,6 +491,21 @@ export function BookingPageInternalApp (props) {
             )
         }
 
+        // once a slot is chosen: who else it is booked with (the resources or other specialists of the slot)
+        function getOwnersContent() {
+            let bookingSlot = bookingData.step_choose_slot.bookingSlot;
+            if (!bookingSlot) {
+                return;
+            }
+            let names = slotOwnerNames(bookingSlot.slot, fetchData.catalog, item.specialist ? item.specialist.id : null);
+            if (names.length === 0) {
+                return;
+            }
+            return (
+            <div className="appBokingServiceLineItem appBookingServiceResources"> { names.join(', ') } </div>
+            )
+        }
+
         return (<div className="appBookingServiceContainer">
                     <div className="appBokingServiceLineItem appBookingServiceHeader">
                         <div className="appBookingContentGrow"> { item.sku.name } </div>
@@ -467,6 +517,7 @@ export function BookingPageInternalApp (props) {
                         }
                     </div>
                     { getSpecialistContent() }
+                    { getOwnersContent() }
 
                     <div className="appBokingServiceLineItem">
                         <div className="appBookingServiceAttr">
@@ -537,11 +588,12 @@ export function BookingPageInternalApp (props) {
 
     function onSelectDepartment(departmentItem, index) {
         dropReservation();
+        let steps = stepsFor(fetchData.data, departmentItem.id, bookingData.restrictSkuId);
         let step = 'step_choose_specialist';
-        if (bookingData.steps.indexOf('step_choose_specialist') < 0) {
+        if (steps.indexOf('step_choose_specialist') < 0) {
             step = 'step_choose_service';
         }
-        setBookingData( { ...bookingData, step: step, step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
+        setBookingData( { ...bookingData, step: step, steps: steps, step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
                                                    step_choose_specialist: { ...bookingData.step_choose_specialist, specialistId: null },
                                                    step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
@@ -902,17 +954,12 @@ export function BookingPageInternalApp (props) {
         let specialists = {};
         let allSpecialistsData = [];
         let selectedSpecialist = null;
-        // services in the department that are booked without choosing a specialist
-        let hasServicesWithoutSpecialist = false;
         fetchData.data.forEach( sku => {
             if (bookingData.restrictSkuId && String(sku.sku.skuid) !== String(bookingData.restrictSkuId)) {
                 return;
             }
             sku.data.forEach( (itemData, index) => {
                 if (!itemData.specialist) {
-                    let inDepartment = !bookingData.step_choose_department.departmentId ||
-                                       (itemData.departments || []).some( d => d.id === bookingData.step_choose_department.departmentId );
-                    hasServicesWithoutSpecialist = hasServicesWithoutSpecialist || inDepartment;
                     return;
                 }
                 if (itemData.specialist.id in specialists) {
@@ -933,8 +980,8 @@ export function BookingPageInternalApp (props) {
                 });
             });
         });
-        if ((allSpecialistsData.length > 1) || hasServicesWithoutSpecialist) {
-            // add the option for 'any specialist', it also leads to the services that need no specialist.
+        if (allSpecialistsData.length > 1) {
+            // add the option for 'any specialist'.
             allSpecialistsData.splice(0, 0, { id: specialistAnyID });
         }
         if (bookingData.step_choose_specialist.specialistId === specialistAnyID) {
@@ -1102,12 +1149,10 @@ export function BookingPageInternalApp (props) {
             let title = ltext.textValue(getRawTextByKey('step.slot.done'), stepIndex + 1);
 
             const pretty = formatLocalizedDateTime(startDate, ltext.locale);
-            const assignedNames = assignedOwnerNames(bookingData.step_choose_slot.bookingSlot.slot.owners, fetchData.catalog, bookingData.step_choose_service.specialistId);
 
             return (<StepSummary title={title} onEdit={onEditStepChooseSlot} showEdit={bookingData.step_choose_slot.showEdit} ltext={ltext}>
                         <div className="appBookingAttributesLine">{pretty}</div>
                         <div className="appBookingAttributesLine"> {timeStr} </div>
-                        { (assignedNames.length > 0) && <div className="appBookingAttributesLine appBookingAssignedResources"> {ltext.text('service.assigned')}: {assignedNames.join(', ')} </div> }
                         { reservationCountdown() }
                     </StepSummary>)
         } else {
