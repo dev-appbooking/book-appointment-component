@@ -4,6 +4,22 @@ import { httpRequest } from './HttpRequest';
 import {formatLocalizedDateTime} from "./utils/formatters";
 import { MonthlyCalendar } from './MonthlyCalendar.jsx';
 
+/*
+The selected slot is held for this user, so the free slot search may leave it out.
+Put it back in time order, in place of any other slot at the same start, so it stays visible and selected.
+*/
+function insertHeldSlotIntoFreeSlots(slots, selectedBookingSlot) {
+    if (!selectedBookingSlot || !selectedBookingSlot.slot) {
+        return slots;
+    }
+    let held = selectedBookingSlot.slot;
+    let heldTime = new Date(held.startDate).getTime();
+    let result = slots.filter(slot => new Date(slot.startDate).getTime() !== heldTime);
+    let index = result.findIndex(slot => new Date(slot.startDate).getTime() > heldTime);
+    result.splice(index < 0 ? result.length : index, 0, held);
+    return result;
+}
+
 let ChooseAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
     const [fetchingData, setFetchingData] = useState({ fetching: false, status: 'not_fetched' });
@@ -162,7 +178,7 @@ let ChooseAppSlot = function(props) {
                     organizationId: props.organizationId
                 }
                 let slotsByItem = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
-                let res = (slotsByItem && slotsByItem[itemId]) || [];
+                let res = insertHeldSlotIntoFreeSlots((slotsByItem && slotsByItem[itemId]) || [], props.selectedBookingSlot);
                 setSuggestedEvents(res);
                 //set the selection as the first option 
                 if (props.selectedBookingSlot && props.selectedBookingSlot.slot.startDate) {
