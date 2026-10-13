@@ -155,14 +155,14 @@ let ChooseAppSlot = function(props) {
             try {
 
                 setFetchingData({ fetching: true, status: 'not_fetched' });
+                const itemId = 'slots';
                 let bodyReq = {
-                    serviceSkuId: props.skuId,
-                    specialistId: props.specialistId,
-                    locationId: props.locationId,
+                    filterSkuData: [ { id: itemId, skuId: props.skuId, scheduleIds: props.scheduleIds || [] } ],
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     organizationId: props.organizationId
                 }
-                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlot", bodyReq, { 'content-type': 'application/json'});
+                let slotsByItem = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
+                let res = (slotsByItem && slotsByItem[itemId]) || [];
                 setSuggestedEvents(res);
                 //set the selection as the first option 
                 if (props.selectedBookingSlot && props.selectedBookingSlot.slot.startDate) {
@@ -177,7 +177,7 @@ let ChooseAppSlot = function(props) {
                 setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
-    }, [props.specialistId, props.startDate] );
+    }, [props.skuId, props.specialistId, (props.scheduleIds || []).join(','), props.startDate] );
 
     return (
         <div class="appBookingChooseDate">

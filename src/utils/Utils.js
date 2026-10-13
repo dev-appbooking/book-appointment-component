@@ -1,6 +1,15 @@
 
+// only sellable skus have a price
+export function hasPrice(sku) {
+    return !!sku && sku.type === 'SellableEventSku';
+}
+
 export function ServicePrice({ sku }) {
-    let hasPromo = sku.type === 'SellableEventSku' && sku.original_price !== undefined
+    if (!hasPrice(sku)) {
+        return null;
+    }
+
+    let hasPromo = sku.original_price !== undefined
         && parseFloat(sku.original_price) !== parseFloat(sku.price);
 
     if (!hasPromo) {

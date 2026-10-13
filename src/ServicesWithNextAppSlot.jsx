@@ -9,6 +9,7 @@ import { ClockIcon } from './utils/Utils.js';
 import { LocationIcon } from './utils/Utils.js';
 import { XCircle } from './utils/Utils.js';
 import { ServicePrice } from './utils/Utils.js';
+import { optionResources, scheduleIdsForResources } from './utils/bookingData.js';
 
 let ServicesWithNextAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
@@ -18,6 +19,7 @@ let ServicesWithNextAppSlot = function(props) {
     let ltext = props.ltext;
     let specialists = {};
     let locations = {};
+    let resources = {};
     let services = { };
     let inScopeSkusData = [];
     let selectedItemId = null;
@@ -44,21 +46,28 @@ let ServicesWithNextAppSlot = function(props) {
                 return;
             }
 
-            if (props.specialistId && ((props.specialistId !== itemData.specialist.id) && (props.specialistId !== props.specialistAnyID)))
+            let itemSpecialistId = itemData.specialist ? itemData.specialist.id : null;
+            if (props.specialistId && ((props.specialistId !== itemSpecialistId) && (props.specialistId !== props.specialistAnyID)))
             {
                 return;
             }
             
-            let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemData.specialist.id}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist };
+            let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemSpecialistId}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist,
+                           scheduleIds: itemData.scheduleIds || [], resourceSchedules: itemData.resourceSchedules || [] };
 
             if (!oneServicePerSkuAndSpecialists) {
-                specialists[itemData.specialist.id] =  { id:  itemData.specialist.id, value: props.specialistFullName(itemData.specialist) };
+                if (itemData.specialist) {
+                    specialists[itemSpecialistId] =  { id:  itemSpecialistId, value: props.specialistFullName(itemData.specialist) };
+                }
                 objSku.specialist = itemData.specialist;
             } else {
                 objSku.specialist = { id: null };
             }
 
             locations[itemData.location.id] = { id: itemData.location.id, value: `${itemData.location.name} (${itemData.location.city})` };
+            optionResources(itemData).forEach( resource => {
+                resources[resource.id] = { id: resource.id, value: resource.name || String(resource.id) };
+            });
             services[sku.sku.name] = { id: sku.sku.name, value: sku.sku.name };
 
             if (!oneServicePerSkuAndSpecialists) {
@@ -68,6 +77,8 @@ let ServicesWithNextAppSlot = function(props) {
                 let foundSku = false;
                 for(let i=0; i< inScopeSkusData.length; i++) {
                     if ((inScopeSkusData[i].sku.skuid === objSku.sku.skuid) && (inScopeSkusData[i].location.id === objSku.location.id)) {
+                        // one item for all the specialists, so its slots come from all their schedules
+                        inScopeSkusData[i].scheduleIds = Array.from(new Set([ ...inScopeSkusData[i].scheduleIds, ...objSku.scheduleIds ]));
                         foundSku = true;
                         break;
                     }
@@ -77,13 +88,22 @@ let ServicesWithNextAppSlot = function(props) {
                 }
             }
 
-            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && objSku.specialist.id === props.specialistId) {
+            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && (objSku.specialist ? objSku.specialist.id : null) === props.specialistId) {
                 selectedItemId = objSku.sku.skuid;
             }
         });
     });
     if (!selectedItemId && (props.specialistId === props.specialistAnyID)) {
         
+    }
+
+    // filtering on resources narrows the slot search of every service to the selected resources
+    let resourceSelection = props.filterSelections && props.filterSelections['resources'];
+    if (resourceSelection) {
+        inScopeSkusData = inScopeSkusData.map( objSku => {
+            let scheduleIds = scheduleIdsForResources(objSku, resourceSelection);
+            return scheduleIds ? { ...objSku, scheduleIds: scheduleIds } : null;
+        }).filter(Boolean);
     }
 
     function selectSlot(slot) {
@@ -118,7 +138,7 @@ let ServicesWithNextAppSlot = function(props) {
     }
 
     function filteredServices(skus, filterSelections) {
-        // filterSelections is an object whos keys are 'specialists', 'locations', 'services' and each of these map with on object who's keys are the filter selections (ids)
+        // filterSelections is an object whos keys are 'specialists', 'locations', 'resources', 'services' and each of these map with on object who's keys are the filter selections (ids)
         
         function sortByFirstAvailableSlot(skusArray) {
             if (Object.keys(suggestedEvents).length === 0) {
@@ -162,7 +182,7 @@ let ServicesWithNextAppSlot = function(props) {
         }
         let result = [];
         skus.forEach( sku => {
-            if (filterSelections['specialists'] && (! filterSelections['specialists'][sku.specialist.id])) {
+            if (filterSelections['specialists'] && (! sku.specialist || ! filterSelections['specialists'][sku.specialist.id])) {
                 return; // the specialist for this sku is not selected in the filter so just return
             }
             if (filterSelections['locations'] && (! filterSelections['locations'][sku.location.id])) {
@@ -197,7 +217,7 @@ let ServicesWithNextAppSlot = function(props) {
     function serviceItemContent(item, isSelected) {
     
         function getSpecialistContent() {
-            if (props.configs && (props.configs.showSpecialistNameOnServiceItem === false)) {
+            if ((props.configs && (props.configs.showSpecialistNameOnServiceItem === false)) || !props.specialistFullName(item.specialist)) {
                 return;
             }
             return (
@@ -296,9 +316,10 @@ let ServicesWithNextAppSlot = function(props) {
     }
 
     function getServicesContent() {
-        let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1);
+        let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1) || (Object.keys(resources).length > 1);
         let filterData = { items: props.allSkus, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
                                                                 { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) },
+                                                                { id: 'resources', title_key: 'filter.resources', values: Object.values(resources) },
                                                                 { id: 'services', title_key: 'filter.services', values: Object.values(services) } ],
                                 filterSelections: props.filterSelections
                             } ;
@@ -328,19 +349,23 @@ let ServicesWithNextAppSlot = function(props) {
                 }
                 inScopeSkusData.forEach( skuData => {
                     bodyReq.filterSkuData.push( { id: skuData.id,
-                                            serviceSkuId: skuData.sku.id,
-                                            specialistId: skuData.specialist.id,
-                                            locationId: skuData.location.id
+                                            skuId: skuData.sku.id,
+                                            scheduleIds: skuData.scheduleIds
                                         });
                 });
-                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter", bodyReq, { 'content-type': 'application/json'});
+                if (bodyReq.filterSkuData.length === 0) {
+                    setSuggestedEvents({});
+                    setFetchingData({ fetching: false, status: 'success' });
+                    return;
+                }
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res);
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {
                 setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
-    }, [props.skuId, props.locationId, props.specialistId, props.startDate] );
+    }, [props.skuId, props.locationId, props.specialistId, props.startDate, Object.keys(resourceSelection || {}).sort().join(',')] );
 
     return (<>
         { !fetchingData.fetching && getServicesContent() }
