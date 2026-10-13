@@ -1,128 +1,91 @@
-import { HorizontalBar } from './HorizontalBar.jsx';
-import { StepSummary } from './StepSummary.jsx';
-import { ClockIcon, LocationIcon, CalendarIcon, ServicePrice } from './utils/Utils.js';
+import { WidgetFrame, FrameNavigation } from './WidgetFrame.jsx';
+import { DetailsTable } from './DetailsTable.jsx';
+import { hasPrice, CheckCircleIcon, XCircle } from './utils/Utils.js';
 
-export function BookingEventDetails({ details, ltext, onReschedule, onCancel, getRawTextByKey, appBookingConfigs }) {
+/*
+The rows describing a booking, shared by the booking details and the reschedule views.
+*/
+export function eventDetailsRows(details, ltext, getRawTextByKey, appBookingConfigs) {
+    const customer = details.customer || {};
+    const hideSpecialistName = appBookingConfigs && appBookingConfigs.showSpecialistNameOnServiceItem === false;
+    const specialistName = details.specialist
+        ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
+        : null;
+    const assigned = (details.assignedNames || []).length > 0
+        ? `${getRawTextByKey('service.assigned')}: ${details.assignedNames.join(', ')}`
+        : null;
+    const minutes = ltext.textValue(getRawTextByKey('service.minutes'), details.duration);
+
+    return [
+        { id: 'service', label: getRawTextByKey('summary.service'),
+          value: [ details.service ? details.service.name : '-', hideSpecialistName ? null : specialistName, assigned ] },
+        { id: 'location', label: getRawTextByKey('service.address'), value: details.location ? details.location.name : '-' },
+        { id: 'dateTime', label: getRawTextByKey('summary.dateTime'), value: [ details.longDate, `${details.timeStr} (${minutes})` ] },
+        details.service && hasPrice(details.service)
+            ? { id: 'price', label: getRawTextByKey('service.price'), value: `${details.service.price} ${details.service.currency}` }
+            : null,
+        { id: 'personal', label: getRawTextByKey('booking.details.personal'), value: [ customer.name, customer.mobile, customer.email ] }
+    ];
+}
+
+/*
+The details of an existing booking with the reschedule and cancel actions.
+Cancelling asks for a confirmation inside the widget (props.cancelState drives it).
+*/
+export function BookingEventDetails({ details, ltext, title, subtitle, cancelState, onReschedule, onCancel, onConfirmCancel, onDismissCancel, getRawTextByKey, appBookingConfigs }) {
     if (!details) {
         return null;
     }
 
-    const customer = details.customer || {};
-    const specialistName = details.specialist
-        ? `${details.specialist.title || ''} ${details.specialist.firstName || ''} ${details.specialist.lastName || ''}`.trim()
-        : '-';
-    const hideSpecialistName = appBookingConfigs.showSpecialistNameOnServiceItem === false ;
-
-    const locationName = details.location ? `${details.location.name || ''}` : '-';
-    
-    const serviceName = details.service ? details.service.name : '-';
     const isPastEvent = ((new Date(details.startDate)) < (new Date()));
+    const isCanceled = details.status === 'canceled';
+    const isConfirmingCancel = (cancelState === 'confirm') || (cancelState === 'submitting');
+
+    const rows = [
+        { id: 'status', label: getRawTextByKey('summary.status'), value: getRawTextByKey(`booking.status.${details.status}`) },
+        ...eventDetailsRows(details, ltext, getRawTextByKey, appBookingConfigs)
+    ];
+
+    function statusCard() {
+        if (cancelState === 'success') {
+            return (
+                <div className="appBookingSuccessCard appBookingStatusCanceled">
+                    <div className="appBookingSuccessIcon"> <CheckCircleIcon /> </div>
+                    <div className="appBookingSuccessTitle"> { getRawTextByKey('cancel.success') } </div>
+                </div>
+            );
+        }
+        if (isConfirmingCancel) {
+            return (
+                <div className="appBookingConfirmPanel" role="alertdialog" aria-live="polite">
+                    <div className="appBookingConfirmPanelIcon"> <XCircle /> </div>
+                    <div className="appBookingConfirmPanelText"> { getRawTextByKey('cancel.confirm') } </div>
+                </div>
+            );
+        }
+        return null;
+    }
+
+    function footer() {
+        if (isConfirmingCancel) {
+            return ( <FrameNavigation backLabel={getRawTextByKey('cta.cancel.dismiss')} onBack={onDismissCancel} backDisabled={cancelState === 'submitting'}
+                                      nextLabel={getRawTextByKey('cta.cancel.confirm')} onNext={onConfirmCancel} nextDisabled={cancelState === 'submitting'}
+                                      nextDanger={true} /> );
+        }
+        const canCancel = onCancel && !isCanceled && !isPastEvent;
+        const canReschedule = onReschedule && !isPastEvent;
+        if (!canCancel && !canReschedule) {
+            return null;
+        }
+        return ( <FrameNavigation backLabel={canCancel ? getRawTextByKey('cta.cancel') : null} onBack={onCancel} backDanger={true}
+                                  nextLabel={canReschedule ? getRawTextByKey('cta.reschedule') : null} onNext={onReschedule} /> );
+    }
+
     return (
-        <>
-            <div className="appBookingTitle"> { getRawTextByKey('booking.details.title')} </div>
-            
-            <HorizontalBar />
-
-            <div className="appBookingStepContainer">
-                <StepSummary title={ getRawTextByKey('booking.details.dateTime') } showEdit={false} ltext={ltext}>
-                    <div className="appBookingServiceContainer">
-                        <div className="appBokingServiceLineItem appBookingServiceHeader"> 
-                            { serviceName }
-                        </div>
-
-                        { (!hideSpecialistName) && (details.specialist || details.specialistId) && ( <div className="appBokingServiceLineItem appBookingServiceSpecialist">
-                            { specialistName }
-                        </div> ) }
-
-                        { (details.assignedNames || []).length > 0 && ( <div className="appBokingServiceLineItem appBookingAssignedResources">
-                            { ltext.text('service.assigned') }: { details.assignedNames.join(', ') }
-                        </div> ) }
-
-                        { details.service && <ServicePrice sku={ details.service } /> }
-
-                        <div className="appBokingServiceLineItem">
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrContent">
-                                    { details.duration } minute
-                                </div>
-                            </div>
-
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrIcon">
-                                    <LocationIcon />
-                                </div>
-                                <div className="appBookingServiceAttrContent">
-                                    { locationName }
-                                </div>
-                            </div>
-                        </div>
-                    
-                        <div className="appBokingServiceLineItem"> 
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrIcon">
-                                    <CalendarIcon />
-                                </div>
-                                <div className="appBookingServiceAttrContent">
-                                        {details.prettyDateTime}
-                                </div>
-                            </div>
-                        </div>    
-                        <div className="appBokingServiceLineItem">
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrIcon">
-                                    <ClockIcon />
-                                </div>
-                                <div className="appBookingServiceAttrContent">
-                                    { details.timeStr }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </StepSummary>
-            </div>
-
-            <HorizontalBar />
-
-            <div className="appBookingStepContainer">
-                <StepSummary title={ getRawTextByKey('booking.details.status') } showEdit={false} ltext={ltext}>
-                    <div className="appBokingServiceLineItem"> 
-                        { getRawTextByKey(`booking.status.${details.status}`) } 
-                    </div>    
-                    
-                </StepSummary>
-            </div>
-
-            <HorizontalBar />
-
-            <div className="appBookingStepContainer">
-                <StepSummary title={ getRawTextByKey('booking.details.personal') } showEdit={false} ltext={ltext}>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('customer.name')}: {customer.name || '-'}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('customer.email')}: {customer.email || '-'}
-                    </div>
-                    <div className="appBookingAttributesLine">
-                        {ltext.text('customer.mobile')}: {customer.mobile || '-'}
-                    </div>         
-                </StepSummary>
-            </div>
-
-
-            <HorizontalBar />
-
-            <div className="appBookingCtaContainer">
-                {(onReschedule && (!isPastEvent)) && (
-                    <button className="appBookingCtaButton" onClick={onReschedule}>
-                        {ltext.text('cta.reschedule')}
-                    </button>
-                )}
-                {(onCancel && (details.status !== 'canceled') && (!isPastEvent)) && (
-                    <button className="appBookingCtaButton appBookingCtaButtonDanger" onClick={onCancel}>
-                        {ltext.text('cta.cancel')}
-                    </button>
-                )}
-            </div>
-        </>
+        <WidgetFrame title={title} subtitle={subtitle} footer={footer()}>
+            { statusCard() }
+            { (cancelState === 'error') && <div className="appBookingErrorText appBookingMessage"> { getRawTextByKey('cancel.error') } </div> }
+            <DetailsTable rows={rows} />
+        </WidgetFrame>
     );
 }

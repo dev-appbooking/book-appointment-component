@@ -27,3 +27,28 @@ export function formatLocalizedDateTime(date, language = 'ro') {
 
     return `${weekdayCap}, ${day} ${monthCap} (${dmy})`;
 }
+const intlLocales = {
+    ro: 'ro-RO',
+    en: 'en-GB'
+};
+
+function dateParts(date, language, options) {
+    const locale = intlLocales[language] || 'ro-RO';
+    let parts = {};
+    new Intl.DateTimeFormat(locale, options).formatToParts(date).forEach( part => {
+        parts[part.type] = part.value;
+    });
+    return parts;
+}
+
+// e.g. "Joi, 19 Februarie"
+export function formatLocalizedDayMonth(date, language = 'ro') {
+    const parts = dateParts(date, language, { weekday: 'long', day: 'numeric', month: 'long' });
+    return `${capitalizeFirst(parts.weekday)}, ${parts.day} ${capitalizeFirst(parts.month)}`;
+}
+
+// e.g. "Luni, 16 Februarie 2026"
+export function formatLocalizedLongDate(date, language = 'ro') {
+    const parts = dateParts(date, language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return `${capitalizeFirst(parts.weekday)}, ${parts.day} ${capitalizeFirst(parts.month)} ${parts.year}`;
+}

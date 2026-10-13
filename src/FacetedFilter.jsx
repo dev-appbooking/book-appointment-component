@@ -1,6 +1,7 @@
 
 export function FacetedFilter(props) { 
 const ltext = props.ltext;
+const showTitles = props.showTitles !== false;
 function onChangeItem(filterGroupId, filterItemId) {
     if (props.onChange) {
         props.onChange(filterGroupId, filterItemId);
@@ -20,7 +21,7 @@ return (
             }
             return ( 
                 <div key={filterGroupItem.title_key} className="appBookingFacetGroup">
-                    <div className="appBookingFacetGroupHeader"> { ltext.text(filterGroupItem.title_key) } </div>
+                    { showTitles && <div className="appBookingFacetGroupHeader"> { ltext.text(filterGroupItem.title_key) } </div> }
                     { filterGroupItem.values.map ((filterItem) => {
                             // ids of different groups (a specialist and a resource) can be equal, so the group is part of the element id
                             const inputId = `${filterGroupItem.id}_${filterItem.id}`;

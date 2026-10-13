@@ -57,7 +57,7 @@ function getDayContent(dayItem) {
     if (calendarData.selectedDate && isEqual(dayItem.dayDate, calendarData.selectedDate)) {
         classBtnVal += "appBookingCalDayBtnSelected ";
     }
-    return (<div className={classContainerVal} > <button disabled={disabledButton} className={classBtnVal} onClick={ () => { onSelectDay(dayItem.dayDate) } }> { dayItem.dayIndex } </button> </div>)
+    return (<div key={dayItem.dayDate.getTime()} className={classContainerVal} > <button type="button" disabled={disabledButton} className={classBtnVal} onClick={ () => { onSelectDay(dayItem.dayDate) } }> { dayItem.dayIndex } </button> </div>)
 }
 
 function getMonthDaysContent() {
@@ -96,14 +96,14 @@ function getMonthDaysContent() {
     let daysHeaderLabel = [ ltext.text('cal.wday.s.Mo'), ltext.text('cal.wday.s.Tu'), ltext.text('cal.wday.s.We'), ltext.text('cal.wday.s.Th'), ltext.text('cal.wday.s.Fr'), ltext.text('cal.wday.s.Su'), ltext.text('cal.wday.s.Sa') ];
     return ( 
         <div> 
-            <div className="appBookingItemsHorizontal appBookingCalHeader"> 
-                <button className="appBookingCalNavBtn" onClick={ onNavigateBefore }> <div className="appBookingCalNavIcon"> <LeftArrowIcon /> </div> </button>
+            <div className="appBookingCalHeader"> 
+                <button type="button" aria-label="<" className="appBookingCalNavBtn" onClick={ onNavigateBefore }> <div className="appBookingCalNavIcon"> <LeftArrowIcon /> </div> </button>
                 <div className="appBookingCalHeaderText"> { monthText } { getYear(calendarData.dateToShow) } </div>
-                <button className="appBookingCalNavBtn" onClick={ onNavigateAfter }> <div className="appBookingCalNavIcon"> <RightArrowIcon /> </div> </button>
+                <button type="button" aria-label=">" className="appBookingCalNavBtn" onClick={ onNavigateAfter }> <div className="appBookingCalNavIcon"> <RightArrowIcon /> </div> </button>
             </div> 
-            <div className="appBookingCalDays">
+            <div className="appBookingCalDays appBookingCalWeekDays">
                 { daysHeaderLabel.map( day => { 
-                    return ( <div className="appBookingCalDay"> { day } </div> )    
+                    return ( <div key={day} className="appBookingCalDay"> { day } </div> )    
                 })}
             </div>
             <div className="appBookingCalDays">
