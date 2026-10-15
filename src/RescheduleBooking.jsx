@@ -13,15 +13,15 @@ import { DetailsTable } from './DetailsTable.jsx';
 import { TermsLabel } from './StandardCustomerForm.jsx';
 import { eventDetailsRows } from './BookingEventDetails.jsx';
 
-const rescheduleSteps = ['reschedule_current', 'reschedule_choose_slot', 'reschedule_confirmation'];
+const rescheduleSteps = ['reschedule_choose_slot', 'reschedule_confirmation'];
 
 /*
-Moves an existing booking to another slot: the current booking, the new date & time, the confirmation.
+Moves an existing booking to another slot: the new date & time (recalling the current booking), the confirmation.
 onBack returns to the booking details, onDone is called once the user leaves the confirmation.
 */
 export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext, getRawTextByKey, appBookingConfigs, onBack, onDone }) {
     const [rescheduleData, setRescheduleData] = useState({
-        step: 'reschedule_current',
+        step: 'reschedule_choose_slot',
         selectedSlot: null,
         acceptTerms: false
     });
@@ -186,15 +186,6 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         return ltext.textValue(getRawTextByKey('step.slot.dayAtTime'), formatLocalizedDayMonth(date, ltext.locale), format(date, 'HH:mm'));
     }
 
-    function contentForStep_current() {
-        return (
-            <>
-                <div className="appBookingStepTitle">{ getRawTextByKey('reschedule.step.current') }</div>
-                <DetailsTable rows={eventDetailsRows(eventDetails, ltext, getRawTextByKey, appBookingConfigs)} />
-            </>
-        );
-    }
-
     function contentForStep_newSlot() {
         return (
             <>
@@ -275,15 +266,10 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
         );
     }
 
+    // back to the booking details: the held slot is let go
     function onBackStep() {
-        if (rescheduleData.step === 'reschedule_choose_slot') {
-            releaseReservation(reservation);
-            setReservation(null);
-            setSlotNotice(null);
-            setRescheduleStatus({ submit: false, status: 'initial', confirmationId: null });
-            setRescheduleData(prev => ({ ...prev, step: 'reschedule_current', selectedSlot: null }));
-            return;
-        }
+        releaseReservation(reservation);
+        setReservation(null);
         if (onBack) {
             onBack();
         }
@@ -291,10 +277,6 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
     function footer() {
         switch (rescheduleData.step) {
-            case 'reschedule_current':
-                return ( <FrameNavigation backLabel={getRawTextByKey('cta.back')} onBack={onBackStep}
-                                          nextLabel={getRawTextByKey('cta.continue')}
-                                          onNext={() => setRescheduleData(prev => ({ ...prev, step: 'reschedule_choose_slot' }))} /> );
             case 'reschedule_choose_slot':
                 return ( <FrameNavigation backLabel={getRawTextByKey('cta.back')} onBack={onBackStep} backDisabled={rescheduleStatus.submit}
                                           nextLabel={getRawTextByKey('reschedule.cta')} onNext={submitReschedule} nextDisabled={!canSubmit()} /> );
@@ -305,8 +287,6 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
     function content() {
         switch (rescheduleData.step) {
-            case 'reschedule_current':
-                return contentForStep_current();
             case 'reschedule_choose_slot':
                 return contentForStep_newSlot();
             default:
@@ -315,7 +295,6 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
     }
 
     const stepLabels = {
-        reschedule_current: getRawTextByKey('reschedule.stepper.current'),
         reschedule_choose_slot: getRawTextByKey('reschedule.stepper.newSlot'),
         reschedule_confirmation: getRawTextByKey('reschedule.stepper.confirmation')
     };
@@ -323,7 +302,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
     return (
         <WidgetFrame title={getRawTextByKey('reschedule.title')} subtitle={getRawTextByKey('reschedule.subtitle')}
-                     stepper={stepper} footer={footer()}>
+                     stepper={stepper} footer={footer()} stepKey={rescheduleData.step}>
             { content() }
         </WidgetFrame>
     );

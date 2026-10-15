@@ -13,9 +13,10 @@ import { configurableText, hasPrice, ClockIcon, LocationIcon, UserIcon, XCircle,
 import { ChooseAppSlot } from './ChooseAppSlot.jsx'
 import { ServicesWithNextAppSlot } from './ServicesWithNextAppSlot.jsx';
 import { ReservationCountdown } from './ReservationCountdown.jsx';
-import { WidgetFrame, FrameNavigation } from './WidgetFrame.jsx';
+import { WidgetFrame, FrameNavigation, bringStepIntoView } from './WidgetFrame.jsx';
+import { ChoicesSummary } from './ChoicesSummary.jsx';
 import { Stepper } from './Stepper.jsx';
-import { SelectionCard, SelectionLine } from './SelectionCard.jsx';
+import { SelectionCard } from './SelectionCard.jsx';
 import { DetailsTable } from './DetailsTable.jsx';
 import { bookingOptionsFromV2, buildCatalog, assignedOwnerNames, slotOwnerNames, specialistFullName } from './utils/bookingData.js';
 
@@ -42,7 +43,8 @@ function emptySelections() {
 
 /*
 This booking Page can have several steps depending on what services are setup.
-Every step is shown on its own: choosing an option selects it, the Continue button moves to the next step.
+Every step is shown on its own: choosing an option selects it and moves to the next step.
+Only the personal data step has a button, the one that creates the booking.
 */
 export function BookingPageInternalApp (props) {
 
@@ -75,6 +77,7 @@ export function BookingPageInternalApp (props) {
     const reservingRef = useRef(false);
     const submittingRef = useRef(false);
     const widgetRef = useRef(null);
+    const shownEventModeRef = useRef(eventMode);
 
 
     let apiBase = 'https://www.appbooking.ro';
@@ -357,13 +360,14 @@ export function BookingPageInternalApp (props) {
         loadEvent();
     }, [props.eventId]);
 
-    // a new step starts at the top of the widget
+    // switching between the booking details and rescheduling starts at the top of the widget, like a new step
     useEffect(() => {
-        let element = widgetRef.current;
-        if (element && element.getBoundingClientRect && (element.getBoundingClientRect().top < 0) && element.scrollIntoView) {
-            element.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        if (shownEventModeRef.current === eventMode) {
+            return;
         }
-    }, [bookingData.step, eventMode]);
+        shownEventModeRef.current = eventMode;
+        bringStepIntoView(widgetRef.current);
+    }, [eventMode]);
 
     useEffect(() => {
         if (!reservation) {
@@ -419,7 +423,7 @@ export function BookingPageInternalApp (props) {
     }
 
     /*
-    Holds the chosen slot and selects it. Any previous hold is released first.
+    Holds the chosen slot, selects it and moves to the personal data step. Any previous hold is released first.
     serviceChanges is applied to step_choose_service when the slot was picked from the service list.
     */
     async function reserveSlot(slot, serviceChanges) {
@@ -429,6 +433,7 @@ export function BookingPageInternalApp (props) {
         if (isSameService(serviceChanges) && isReservationValid(reservation) && isSameSlot(slot, bookingData.step_choose_slot.bookingSlot)) {
             // the user picked the slot they already hold
             setSlotNotice(null);
+            goToStep('step_personal_data');
             return;
         }
 
@@ -441,7 +446,7 @@ export function BookingPageInternalApp (props) {
             let res = await httpRequest('POST', apiBase + '/api/integration/' + bookingData.integrationId + '/event/reservation', { token: slot.slot.token }, { 'content-type': 'application/json'});
             setReservation({ id: res.id, expiresAt: new Date(res.expires_at).getTime() });
             setSlotNotice(null);
-            setBookingData(prev => ({ ...prev, step_choose_slot: { ...prev.step_choose_slot, bookingSlot: slot } }));
+            setBookingData(prev => ({ ...prev, step: 'step_personal_data', step_choose_slot: { ...prev.step_choose_slot, bookingSlot: slot } }));
         } catch (e) {
             // 409: taken or held by someone else, 400: the slot token is no longer valid
             let noticeKey = ([400, 409].includes(e && e.status)) ? 'step.slot.unavailable' : 'error.generic';
@@ -459,10 +464,11 @@ export function BookingPageInternalApp (props) {
     function onSelectService(serviceItem) {
         let changes = serviceChangesFor(serviceItem);
         if (isSameService(changes)) {
+            goToStep('step_choose_slot');
             return;
         }
         dropReservation();
-        setBookingData( { ...bookingData, step_choose_service: { ...bookingData.step_choose_service, ...changes },
+        setBookingData( { ...bookingData, step: 'step_choose_slot', step_choose_service: { ...bookingData.step_choose_service, ...changes },
                                           step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null } } );
     }
 
@@ -506,11 +512,13 @@ export function BookingPageInternalApp (props) {
 
     function onSelectDepartment(departmentItem) {
         if (departmentItem.id === bookingData.step_choose_department.departmentId) {
+            goToStep(nextStepOf('step_choose_department', bookingData.steps));
             return;
         }
         dropReservation();
         let steps = stepsFor(fetchData.data, departmentItem.id, bookingData.restrictSkuId);
-        setBookingData( { ...bookingData, steps: steps, step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
+        setBookingData( { ...bookingData, steps: steps, step: nextStepOf('step_choose_department', steps),
+                                                   step_choose_department: { ...bookingData.step_choose_department , departmentId: departmentItem.id },
                                                    step_choose_specialist: { ...bookingData.step_choose_specialist, specialistId: null },
                                                    step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, scheduleIds: [], filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
@@ -519,10 +527,12 @@ export function BookingPageInternalApp (props) {
 
     function onSelectSpecialist(specialistItem) {
         if (specialistItem.id === bookingData.step_choose_specialist.specialistId) {
+            goToStep(nextStepOf('step_choose_specialist', bookingData.steps));
             return;
         }
         dropReservation();
-        setBookingData( { ...bookingData, step_choose_specialist: {  ...bookingData.step_choose_specialist, specialistId: specialistItem.id },
+        setBookingData( { ...bookingData, step: nextStepOf('step_choose_specialist', bookingData.steps),
+                                                   step_choose_specialist: {  ...bookingData.step_choose_specialist, specialistId: specialistItem.id },
                                                    step_choose_service: { ...bookingData.step_choose_service, skuId: null, specialistId: null, locationId: null, scheduleIds: [], filterSelections: {} },
                                                    step_choose_slot: { ...bookingData.step_choose_slot, bookingSlot: null }
                         } );
@@ -653,8 +663,22 @@ export function BookingPageInternalApp (props) {
         return (bookingData.steps || []).indexOf(stepName);
     }
 
+    function nextStepOf(stepName, steps) {
+        return steps[steps.indexOf(stepName) + 1];
+    }
+
     function goToStep(stepName) {
         setBookingData(prev => ({ ...prev, step: stepName }));
+    }
+
+    function goBackToStep(stepName) {
+        if (stepIndexOf(stepName) < stepIndexOf('step_choose_slot')) {
+            // back to choosing the service: the held slot is let go
+            dropReservation();
+            setBookingData(prev => ({ ...prev, step: stepName, step_choose_slot: { ...prev.step_choose_slot, bookingSlot: null } }));
+            return;
+        }
+        goToStep(stepName);
     }
 
     function onBack() {
@@ -662,46 +686,7 @@ export function BookingPageInternalApp (props) {
         if (!previousStep) {
             return;
         }
-        if (stepIndexOf(previousStep) < stepIndexOf('step_choose_slot')) {
-            // back to choosing the service: the held slot is let go
-            dropReservation();
-            setBookingData(prev => ({ ...prev, step: previousStep, step_choose_slot: { ...prev.step_choose_slot, bookingSlot: null } }));
-            return;
-        }
-        goToStep(previousStep);
-    }
-
-    function hasHeldSlot() {
-        return !!bookingData.step_choose_slot.bookingSlot && isReservationValid(reservation);
-    }
-
-    function onContinue() {
-        let step = bookingData.step;
-        if (step === 'step_personal_data') {
-            createBooking();
-        } else if (step === 'step_choose_service') {
-            // a slot picked on the service card skips the date & time step
-            goToStep(hasHeldSlot() ? 'step_personal_data' : 'step_choose_slot');
-        } else {
-            goToStep(bookingData.steps[stepIndexOf(step) + 1]);
-        }
-    }
-
-    function canContinue() {
-        switch (bookingData.step) {
-            case 'step_choose_department':
-                return !!bookingData.step_choose_department.departmentId;
-            case 'step_choose_specialist':
-                return !!bookingData.step_choose_specialist.specialistId;
-            case 'step_choose_service':
-                return !!bookingData.step_choose_service.skuId;
-            case 'step_choose_slot':
-                return hasHeldSlot();
-            case 'step_personal_data':
-                return getSubmitBookingBtnStatus();
-            default:
-                return false;
-        }
+        goBackToStep(previousStep);
     }
 
     function onChangeFacetedFilter(filterGroupId, filterItemId) {
@@ -921,27 +906,43 @@ export function BookingPageInternalApp (props) {
         return (<ReservationCountdown expiresAt={reservation.expiresAt} text={getRawTextByKey('step.slot.reservationHeldFor')} />);
     }
 
-    // the card recalling the department and specialist chosen in the previous steps
-    function previousChoicesCard() {
-        let lines = [];
-        let departmentId = bookingData.step_choose_department.departmentId;
-        if ((stepIndexOf('step_choose_department') >= 0) && departmentId && (bookingData.step !== 'step_choose_department')) {
-            let department = findDepartment(departmentId);
-            if (department) {
-                lines.push(<SelectionLine key="department" label={getRawTextByKey('step.department.done')} value={department.name} />);
-            }
-        }
-        let specialistId = bookingData.step_choose_specialist.specialistId;
-        if ((stepIndexOf('step_choose_specialist') >= 0) && specialistId && (bookingData.step === 'step_choose_service')) {
-            let specialist = findSpecialist(specialistId);
-            if (specialist) {
-                lines.push(<SelectionLine key="specialist" label={getRawTextByKey('step.specialist.done')} value={specialistNameOf(specialist)} />);
-            }
-        }
-        if (lines.length === 0) {
+    // the line under the stepper recalling the choices of the previous steps; choosing one goes back to its step
+    function choicesSummary() {
+        if (bookingData.step === 'step_confirmation') {
             return null;
         }
-        return (<SelectionCard className="appBookingSelectionCardInline"> { lines } </SelectionCard>);
+        let currentIndex = stepIndexOf(bookingData.step);
+        let items = [];
+        function addItem(stepName, value) {
+            let index = stepIndexOf(stepName);
+            if ((index >= 0) && (index < currentIndex) && value) {
+                items.push({ id: stepName, label: getRawTextByKey('stepper.' + stepName), value: value,
+                             onSelect: () => { if (!bookingStatus.submit) { goBackToStep(stepName); } } });
+            }
+        }
+
+        let departmentId = bookingData.step_choose_department.departmentId;
+        let department = departmentId ? findDepartment(departmentId) : null;
+        addItem('step_choose_department', department && department.name);
+
+        let specialistId = bookingData.step_choose_specialist.specialistId;
+        let specialist = specialistId ? findSpecialist(specialistId) : null;
+        addItem('step_choose_specialist', specialist && specialistNameOf(specialist));
+
+        let service = findSelectedService();
+        let hasSpecialistItem = items.some( item => item.id === 'step_choose_specialist' );
+        addItem('step_choose_service', service && (hasSpecialistItem ? service.sku.name : serviceTitle(service)));
+
+        let bookingSlot = bookingData.step_choose_slot.bookingSlot;
+        let startDate = bookingSlot ? new Date(bookingSlot.slot.startDate) : null;
+        addItem('step_choose_slot', startDate && ltext.textValue(getRawTextByKey('step.slot.dayAtTime'), formatLocalizedDayMonth(startDate, ltext.locale), format(startDate, 'HH:mm')));
+
+        return ( <ChoicesSummary items={items} label={getRawTextByKey('summary.label')}
+                                 changeLabel={ (choice) => ltext.textValue(getRawTextByKey('summary.change'), choice) } /> );
+    }
+
+    function moreLabel(count) {
+        return ltext.textValue(getRawTextByKey('list.showMore'), count);
     }
 
     function contentForStep_category(stepIndex) {
@@ -998,19 +999,18 @@ export function BookingPageInternalApp (props) {
             allSpecialistsData.splice(0, 0, { id: specialistAnyID });
         }
         return (<>
-                    { previousChoicesCard() }
                     <div className="appBookingStepTitle"> { stepTitle('step.specialist', stepIndex) } </div>
                     <CustomList
                         variant="tiles"
                         items={ allSpecialistsData } onSelectItem={onSelectSpecialist}
                         selectedId={bookingData.step_choose_specialist.specialistId}
-                        itemContent={specialistItemContent} />
+                        itemContent={specialistItemContent}
+                        maxVisible={8} moreLabel={moreLabel} />
                 </>);
     }
 
     function contentForStep_service(stepIndex) {
         return (<>
-                { previousChoicesCard() }
                 <ServicesWithNextAppSlot allSkus={fetchData.data}
                                          appBookingConfigs={props.configs}
                                          restrictSkuId={bookingData.restrictSkuId}
@@ -1030,11 +1030,32 @@ export function BookingPageInternalApp (props) {
                                          organizationId={bookingData.organizationId}
                                          refreshKey={slotsRefreshKey}
                                          maxSlotsPerItem={2}
+                                         maxVisible={4}
+                                         moreLabel={moreLabel}
                                          title={stepTitle('step.service', stepIndex)}
                                          ltext={ltext}
                                          rawTextByKey={getRawTextByKey} />
                 { reservationCountdown() }
             </>);
+    }
+
+    // the duration, location and price of the chosen service
+    function serviceMeta(service) {
+        return (
+            <div className="appBookingServiceMeta">
+                <div className="appBookingServiceAttr">
+                    <div className="appBookingServiceAttrIcon"> <ClockIcon /> </div>
+                    <div className="appBookingServiceAttrContent"> { minutesText(service.sku.duration) } </div>
+                </div>
+                <div className="appBookingServiceAttr">
+                    <div className="appBookingServiceAttrIcon"> <LocationIcon /> </div>
+                    <div className="appBookingServiceAttrContent"> { service.location.name } </div>
+                </div>
+                { priceText(service.sku) && <div className="appBookingServiceAttr">
+                    <div className="appBookingServiceAttrContent"> { priceText(service.sku) } </div>
+                </div> }
+            </div>
+        );
     }
 
     function contentForStep_dateAndTime(stepIndex) {
@@ -1043,19 +1064,7 @@ export function BookingPageInternalApp (props) {
                 { service && (
                     <SelectionCard title={getRawTextByKey('step.service.done')}>
                         <div className="appBookingSelectionHighlight"> { serviceTitle(service) } </div>
-                        <div className="appBookingServiceMeta">
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrIcon"> <ClockIcon /> </div>
-                                <div className="appBookingServiceAttrContent"> { minutesText(service.sku.duration) } </div>
-                            </div>
-                            <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrIcon"> <LocationIcon /> </div>
-                                <div className="appBookingServiceAttrContent"> { service.location.name } </div>
-                            </div>
-                            { priceText(service.sku) && <div className="appBookingServiceAttr">
-                                <div className="appBookingServiceAttrContent"> { priceText(service.sku) } </div>
-                            </div> }
-                        </div>
+                        { serviceMeta(service) }
                     </SelectionCard> ) }
                 <div className="appBookingStepTitle"> { stepTitle('step.slot', stepIndex) } </div>
                 <ChooseAppSlot key={slotsRefreshKey} apiBase={apiBase} integrationId={bookingData.integrationId} skuId={bookingData.step_choose_service.skuId}
@@ -1099,6 +1108,7 @@ export function BookingPageInternalApp (props) {
                     <div className="appBookingServiceAttrIcon"> <UserIcon /> </div>
                     <div className="appBookingServiceAttrContent"> { serviceTitle(service) } </div>
                 </div>
+                { serviceMeta(service) }
                 { owners.length > 0 && <div className="appBookingServiceAttr appBookingServiceResources">
                     <div className="appBookingServiceAttrContent"> { getRawTextByKey('service.assigned') }: { owners.join(', ') } </div>
                 </div> }
@@ -1181,18 +1191,23 @@ export function BookingPageInternalApp (props) {
         if (bookingData.step === 'step_confirmation') {
             return ( <FrameNavigation nextLabel={getRawTextByKey('cta.newBooking')} onNext={onNewBooking} /> );
         }
+        // the other steps move on as soon as an option is chosen
         let isPersonalData = bookingData.step === 'step_personal_data';
+        if (!isPersonalData && (stepIndexOf(bookingData.step) <= 0)) {
+            // no button to show, so no footer taking room at the bottom of the screen
+            return null;
+        }
         return ( <FrameNavigation backLabel={ stepIndexOf(bookingData.step) > 0 ? getRawTextByKey('cta.back') : null }
                                   onBack={onBack} backDisabled={bookingStatus.submit}
-                                  nextLabel={getRawTextByKey(isPersonalData ? 'ctaBooking' : 'cta.continue')}
-                                  onNext={onContinue} nextDisabled={!canContinue()} /> );
+                                  nextLabel={isPersonalData ? getRawTextByKey('ctaBooking') : null}
+                                  onNext={createBooking} nextDisabled={!getSubmitBookingBtnStatus()} /> );
     }
 
-    function frame(content, stepper, footer, title, subtitle) {
+    function frame(content, stepper, footer, title, subtitle, summary, stepKey) {
         return (
             <WidgetFrame title={title || getRawTextByKey('booking.title')}
                          subtitle={subtitle !== undefined ? subtitle : getRawTextByKey('booking.subtitle')}
-                         stepper={stepper} footer={footer}>
+                         stepper={stepper} summary={summary} footer={footer} stepKey={stepKey}>
                 { content }
             </WidgetFrame>
         );
@@ -1288,7 +1303,8 @@ export function BookingPageInternalApp (props) {
                                                   confirmation: getRawTextByKey('stepper.group.confirmation') }}
                                    currentId={bookingData.step} /> );
 
-        return frame(contentForStep(bookingData.step, stepIndexOf(bookingData.step)), stepper, footerForStep());
+        return frame(contentForStep(bookingData.step, stepIndexOf(bookingData.step)), stepper, footerForStep(), undefined, undefined,
+                     choicesSummary(), bookingData.step);
     }
 
 

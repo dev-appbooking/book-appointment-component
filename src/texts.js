@@ -17,9 +17,16 @@ export const localizationTexts = {
         'stepper.group.service': 'Serviciu',
         'stepper.group.details': 'Date alese',
         'stepper.group.confirmation': 'Confirmare',
+        'summary.label': 'Alegerile tale',
+        'summary.change': 'Modifică: {0}',
+        'list.showMore': 'Arată mai multe ({0})',
+        'step.slot.morning': 'Dimineața',
+        'step.slot.afternoon': 'După-amiaza',
+        'step.slot.evening': 'Seara',
+        'cal.prevWeek': 'Săptămâna anterioară',
+        'cal.nextWeek': 'Săptămâna următoare',
 
         'cta.back': 'Înapoi',
-        'cta.continue': 'Continuă',
         'cta.newBooking': 'Programare nouă',
 
         'step.department': 'Alege categoria de servicii',
@@ -65,7 +72,7 @@ export const localizationTexts = {
         'customer.mobile': 'Telefon',
         'customer.email': 'Email',
         'customer.acceptTerms': 'Am citit, înțeles și sunt de acord cu termenii și condițiile serviciului de programare',
-        'ctaBooking': 'Continuă',
+        'ctaBooking': 'Programează',
 
         'booking.error': 'Nu s-a putut crea programarea. Te rugăm să încerci din nou.',
         'booking.success': 'Programare creată cu succes!',
@@ -105,7 +112,6 @@ export const localizationTexts = {
 
         'reschedule.title': 'Reprogramare',
         'reschedule.subtitle': 'Alege un nou interval pentru programarea ta',
-        'reschedule.stepper.current': 'Programarea curentă',
         'reschedule.stepper.newSlot': 'Data & ora nouă',
         'reschedule.stepper.confirmation': 'Confirmare',
         'reschedule.step.current': 'Programarea curentă',
@@ -165,9 +171,16 @@ export const localizationTexts = {
         'stepper.group.service': 'Service',
         'stepper.group.details': 'Your choices',
         'stepper.group.confirmation': 'Confirmation',
+        'summary.label': 'Your choices',
+        'summary.change': 'Change: {0}',
+        'list.showMore': 'Show more ({0})',
+        'step.slot.morning': 'Morning',
+        'step.slot.afternoon': 'Afternoon',
+        'step.slot.evening': 'Evening',
+        'cal.prevWeek': 'Previous week',
+        'cal.nextWeek': 'Next week',
 
         'cta.back': 'Back',
-        'cta.continue': 'Continue',
         'cta.newBooking': 'New booking',
 
         'step.department': 'Select a service category',
@@ -213,7 +226,7 @@ export const localizationTexts = {
         'customer.mobile': 'Phone',
         'customer.email': 'Email',
         'customer.acceptTerms': 'I have read, understood and I accept the appointment service terms and conditions',
-        'ctaBooking': 'Continue',
+        'ctaBooking': 'Book appointment',
 
         'booking.error': 'Could not create the appointment. Please try again.',
         'booking.success': 'Your appointment was created!',
@@ -253,7 +266,6 @@ export const localizationTexts = {
 
         'reschedule.title': 'Reschedule',
         'reschedule.subtitle': 'Choose a new slot for your appointment',
-        'reschedule.stepper.current': 'Current appointment',
         'reschedule.stepper.newSlot': 'New date & time',
         'reschedule.stepper.confirmation': 'Confirmation',
         'reschedule.step.current': 'Current appointment',
