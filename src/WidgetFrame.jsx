@@ -1,6 +1,7 @@
 /*
 The frame every view of the widget is rendered in: the header, an optional stepper,
 the content of the current step and a footer with the navigation buttons.
+props.footerClassName adds a class to the footer, e.g. appBookingFooterStacked.
 */
 export function WidgetFrame(props) {
     return (
@@ -13,7 +14,7 @@ export function WidgetFrame(props) {
             <div className="appBookingBody">
                 { props.children }
             </div>
-            { props.footer && <div className="appBookingFooter">{ props.footer }</div> }
+            { props.footer && <div className={"appBookingFooter" + (props.footerClassName ? " " + props.footerClassName : "")}>{ props.footer }</div> }
         </div>
     );
 }

@@ -14,6 +14,7 @@ The layout follows the width of the widget (container queries), not the width of
     --appBookingPanel: #e9eef1;
     --appBookingSurface: #fff;
     --appBookingCalendar: #faf8f9;
+    --appBookingSuccess: #2e7d32;
     --appBookingWarning: #d96724;
     --appBookingDanger: #981b1b;
     --appBookingError: #D32F2F;
@@ -157,6 +158,7 @@ The layout follows the width of the widget (container queries), not the width of
 
 .appBookingFooter {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
@@ -167,14 +169,29 @@ The layout follows the width of the widget (container queries), not the width of
 
 .appBookingCtaButton,
 .appBookingSecondaryButton {
-    padding: 10px 20px;
+    padding: 10px 14px;
     border-radius: 6px;
     font-size: 0.85em;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     cursor: pointer;
     border: 1px solid transparent;
+}
+
+/* narrow widgets: the buttons one above the other, the main one on top, all of the same width */
+.appBookingFooterStacked {
+    flex-direction: column-reverse;
+    align-items: stretch;
+}
+
+.appBookingFooterStacked > span:empty {
+    display: none;
+}
+
+/* both buttons grouped on the left side, e.g. the cancel confirmation */
+.appBookingFooterStart {
+    justify-content: flex-start;
 }
 
 .appBookingCtaButton {
@@ -506,6 +523,7 @@ The layout follows the width of the widget (container queries), not the width of
     color: var(--appBookingTextMuted);
     font-size: 0.8em;
     font-weight: 400;
+    margin-bottom: 6px;
 }
 
 .appBookingMoreSlotsButton {
@@ -665,7 +683,7 @@ The layout follows the width of the widget (container queries), not the width of
 }
 
 .appBookingReservationTimer {
-    font-size: 0.85em;
+    font-size: 0.9em;
 }
 
 .appBookingReservationTimerValue {
@@ -841,6 +859,27 @@ The layout follows the width of the widget (container queries), not the width of
     overflow-wrap: anywhere;
 }
 
+.appBookingStatus {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.appBookingStatusIcon,
+.appBookingStatusIcon svg {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+.appBookingStatus_valid .appBookingStatusIcon {
+    color: var(--appBookingSuccess);
+}
+
+.appBookingStatus_canceled .appBookingStatusIcon {
+    color: var(--appBookingWarning);
+}
+
 /* texts */
 .appBokingErrorIcon {
     flex: none;
@@ -899,8 +938,23 @@ The layout follows the width of the widget (container queries), not the width of
         padding: 20px 32px;
     }
 
+    .appBookingCtaButton,
+    .appBookingSecondaryButton {
+        padding: 10px 20px;
+        letter-spacing: 0.04em;
+    }
+
     .appBookingCtaButton {
         flex: 0 0 auto;
+    }
+
+    .appBookingFooterStacked {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .appBookingFooterStacked > span:empty {
+        display: inline;
     }
 
     .appBookingList_tiles {

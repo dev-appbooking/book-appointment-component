@@ -1,6 +1,6 @@
 import { WidgetFrame, FrameNavigation } from './WidgetFrame.jsx';
 import { DetailsTable } from './DetailsTable.jsx';
-import { hasPrice, CheckCircleIcon, XCircle } from './utils/Utils.js';
+import { hasPrice, CheckCircleIcon, XCircle, XCircleSolidIcon } from './utils/Utils.js';
 
 /*
 The rows describing a booking, shared by the booking details and the reschedule views.
@@ -41,8 +41,17 @@ export function BookingEventDetails({ details, ltext, title, subtitle, cancelSta
     const isCanceled = details.status === 'canceled';
     const isConfirmingCancel = (cancelState === 'confirm') || (cancelState === 'submitting');
 
+    // the status with its icon: green when the booking is valid, orange when it was canceled
+    const statusValue = (
+        <span className={"appBookingStatus " + (isCanceled ? "appBookingStatus_canceled" : "appBookingStatus_valid")}>
+            <span className="appBookingStatusIcon"> { isCanceled ? <XCircleSolidIcon /> : <CheckCircleIcon /> } </span>
+            { getRawTextByKey(`booking.status.${details.status}`) }
+        </span>
+    );
+
     const rows = [
-        { id: 'status', label: getRawTextByKey('summary.status'), value: getRawTextByKey(`booking.status.${details.status}`) },
+        details.id ? { id: 'confirmationId', label: getRawTextByKey('booking.ref'), value: details.id } : null,
+        { id: 'status', label: getRawTextByKey('summary.status'), value: statusValue },
         ...eventDetailsRows(details, ltext, getRawTextByKey, appBookingConfigs)
     ];
 
@@ -82,7 +91,8 @@ export function BookingEventDetails({ details, ltext, title, subtitle, cancelSta
     }
 
     return (
-        <WidgetFrame title={title} subtitle={subtitle} footer={footer()}>
+        <WidgetFrame title={title} subtitle={subtitle} footer={footer()}
+                     footerClassName={isConfirmingCancel ? "appBookingFooterStart" : "appBookingFooterStacked"}>
             { statusCard() }
             { (cancelState === 'error') && <div className="appBookingErrorText appBookingMessage"> { getRawTextByKey('cancel.error') } </div> }
             <DetailsTable rows={rows} />
