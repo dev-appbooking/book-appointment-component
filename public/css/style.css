@@ -2,6 +2,13 @@
 Default styles of the appBooking widget. Every element carries an appBooking* class meant to be
 overridden by the host site. Most of a rebrand is changing the variables below.
 The layout follows the width of the widget (container queries), not the width of the page.
+Host pages can also set:
+- --appBookingStickyOffset: room left below the sticky footer of narrow layouts, e.g. for a cookie banner,
+  a chat bubble or a bottom bar of the site;
+- --appBookingScrollOffset: room left above the widget when a new step brings it into view, and above the
+  sticky summary of narrow layouts, e.g. for a fixed header of the site.
+The sticky footer and summary need every ancestor of the widget to let it overflow: inside an element with
+overflow: hidden or auto they scroll along with the rest of the widget.
 */
 .appBookingWidget {
     --appBookingAccent: #00897b;
@@ -22,6 +29,7 @@ The layout follows the width of the widget (container queries), not the width of
 
     display: block;
     container-type: inline-size;
+    scroll-margin-top: var(--appBookingScrollOffset, 0px);
     color: var(--appBookingText);
     font-size: 15px;
     line-height: 1.4;
@@ -43,6 +51,8 @@ The layout follows the width of the widget (container queries), not the width of
     background-color: var(--appBookingSurface);
     box-shadow: 0 2px 12px rgb(0 0 0 / 18%);
     overflow: hidden;
+    /* clips the rounded corners without breaking the sticky footer; older browsers keep hidden */
+    overflow: clip;
 }
 
 /* header */
@@ -148,6 +158,59 @@ The layout follows the width of the widget (container queries), not the width of
     font-weight: 600;
 }
 
+/* the previous choices, one line under the stepper */
+.appBookingChoicesSummary {
+    position: sticky;
+    top: var(--appBookingScrollOffset, 0px);
+    z-index: 2;
+    padding: 8px 16px;
+    background-color: var(--appBookingSurface);
+    border-bottom: 1px solid var(--appBookingBorder);
+}
+
+.appBookingChoicesSummaryChip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 4px 12px;
+    border: 1px solid var(--appBookingAccent);
+    border-radius: 999px;
+    background-color: var(--appBookingAccentLight);
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.appBookingChoicesSummaryEntry {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.appBookingChoicesSummarySeparator {
+    flex: none;
+    padding: 0 6px;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingChoicesSummaryItem {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 2px 0;
+    border: 0;
+    background-color: transparent;
+    color: var(--appBookingAccentDark);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.appBookingChoicesSummaryItem:hover {
+    text-decoration: underline;
+}
+
 /* body and footer */
 .appBookingBody {
     padding: 20px 16px;
@@ -156,13 +219,23 @@ The layout follows the width of the widget (container queries), not the width of
     gap: 16px;
 }
 
+.appBookingStepTitle:focus,
+.appBookingSuccessTitle:focus,
+.appBookingTitle:focus {
+    outline: none;
+}
+
+/* narrow widgets: the footer stays at the bottom of the screen while the widget is on screen */
 .appBookingFooter {
+    position: sticky;
+    bottom: var(--appBookingStickyOffset, 0px);
+    z-index: 2;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
     background-color: var(--appBookingPanel);
     border-top: 1px solid var(--appBookingBorder);
 }
@@ -255,6 +328,25 @@ The layout follows the width of the widget (container queries), not the width of
     gap: 8px;
 }
 
+/* placeholders taking the place of the content while it loads */
+.appBookingSkeleton {
+    background-color: var(--appBookingPanel);
+    border-radius: 6px;
+    animation: appBookingPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes appBookingPulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .appBookingSkeleton {
+        animation: none;
+    }
+}
+
 /* selectable grids */
 .appBookingList {
     width: 100%;
@@ -294,6 +386,22 @@ The layout follows the width of the widget (container queries), not the width of
 
 .appBookingTileText {
     overflow-wrap: anywhere;
+}
+
+.appBookingListMoreButton {
+    align-self: center;
+    padding: 8px 16px;
+    border: 1px dashed var(--appBookingAccent);
+    border-radius: 999px;
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingAccent);
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.appBookingListMoreButton:hover {
+    background-color: var(--appBookingAccentLight);
 }
 
 /* cards recalling the previous choices */
@@ -514,6 +622,16 @@ The layout follows the width of the widget (container queries), not the width of
     border-top: 1px solid var(--appBookingBorder);
 }
 
+/* about the height of the first slots, so the cards keep their size once the slots are loaded */
+.appBookingServiceNoSlots {
+    min-height: 100px;
+}
+
+.appBookingItemsHorizontal .appBookingTimeSlotSkeleton {
+    width: 72px;
+    height: 43px;
+}
+
 .appBookingDateLine {
     color: var(--appBookingText);
     font-weight: 500;
@@ -563,6 +681,16 @@ The layout follows the width of the widget (container queries), not the width of
     width: 100%;
 }
 
+/* about the height of the slot placeholders, so messages and slots take the same space */
+.appBookingChooseDateSlots {
+    min-height: 330px;
+}
+
+/* narrow widgets show a row of days instead of the monthly calendar */
+.appBookingChooseDateCal .appBookingCal {
+    display: none;
+}
+
 .appBookingCal {
     background-color: var(--appBookingCalendar);
     border-radius: 6px;
@@ -585,6 +713,11 @@ The layout follows the width of the widget (container queries), not the width of
     background-color: transparent;
     border: 0;
     padding: 4px 8px;
+}
+
+.appBookingCalNavBtn[disabled] {
+    opacity: 0.35;
+    cursor: default;
 }
 
 .appBookingCalNavIcon {
@@ -621,6 +754,53 @@ The layout follows the width of the widget (container queries), not the width of
     padding: 0;
 }
 
+/* the row of days, swiped sideways one week at a time */
+.appBookingWeekCal {
+    background-color: var(--appBookingCalendar);
+    border-radius: 6px;
+    padding: 8px 8px 12px;
+}
+
+.appBookingWeekCalDays {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 6 * 4px) / 7);
+    column-gap: 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.appBookingWeekCalDays::-webkit-scrollbar {
+    display: none;
+}
+
+.appBookingWeekCalDay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background-color: transparent;
+    color: var(--appBookingTextDisabled);
+    font-size: 0.9em;
+}
+
+.appBookingWeekCalDay:nth-child(7n+1) {
+    scroll-snap-align: start;
+}
+
+.appBookingWeekCalDayName {
+    font-size: 0.8em;
+}
+
+.appBookingWeekCalDayNumber {
+    font-weight: 600;
+}
+
 .appBookingCalDayBtnAvailable {
     border-color: var(--appBookingAccentDark);
     color: var(--appBookingAccentDark);
@@ -645,6 +825,21 @@ The layout follows the width of the widget (container queries), not the width of
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.appBookingTimeSlotsGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.appBookingTimeSlotsGroupLabel {
+    color: var(--appBookingTextMuted);
+    font-size: 0.85em;
+}
+
+.appBookingTimeSlotsGrid .appBookingTimeSlotSkeleton {
+    height: 51px;
 }
 
 .appBookingTimeSlotsGrid {
@@ -929,12 +1124,20 @@ The layout follows the width of the widget (container queries), not the width of
         display: none;
     }
 
+    .appBookingChoicesSummary {
+        position: static;
+        padding: 12px 32px;
+    }
+
     .appBookingBody {
         padding: 32px;
         gap: 20px;
+        /* loading and short steps keep about the height of the others */
+        min-height: 400px;
     }
 
     .appBookingFooter {
+        position: static;
         padding: 20px 32px;
     }
 
@@ -1013,6 +1216,14 @@ The layout follows the width of the widget (container queries), not the width of
     .appBookingChooseDateCal {
         width: 45%;
         max-width: 420px;
+    }
+
+    .appBookingChooseDateCal .appBookingCal {
+        display: block;
+    }
+
+    .appBookingChooseDateCal .appBookingWeekCal {
+        display: none;
     }
 
     .appBookingChooseDateSlots {

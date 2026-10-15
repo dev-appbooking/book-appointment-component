@@ -137,12 +137,24 @@ let ServicesWithNextAppSlot = function(props) {
         }
 
         function getAvailableSlots(record) {
+            // the placeholders and the message take about the space of the slots, so the cards keep their height
             if (fetchingData.fetching) {
-                return ( <div className="appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div> )
+                return ( <div className="appBookingServiceSlots appBookingLoading" aria-busy="true">
+                            <div className="appBookingDateLine">
+                                <div className="appBookingDateLineHeader"> { props.rawTextByKey('step.service.firstSlot') } </div>
+                                <div className="appBookingDateLineContent appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div>
+                            </div>
+                            <div className="appBookingItemsHorizontal">
+                                <div className="appBookingSkeleton appBookingTimeSlotSkeleton"></div>
+                                <div className="appBookingSkeleton appBookingTimeSlotSkeleton"></div>
+                            </div>
+                         </div> )
             }
             let slotsForItem = suggestedEvents[record.id] || [];
             if (slotsForItem.length === 0) {
-                return ( <div className="appBookingWarningText"> { props.rawTextByKey('step.slot.noSlotShort') } </div> )
+                return ( <div className="appBookingServiceSlots appBookingServiceNoSlots">
+                            <div className="appBookingWarningText"> { props.rawTextByKey('step.slot.noSlotShort') } </div>
+                         </div> )
             }
 
             let slots = [];
@@ -251,7 +263,9 @@ let ServicesWithNextAppSlot = function(props) {
                 items={ filteredServices(inScopeSkusData, props.filterSelections || {}) }
                 onSelectItem={onSelectService}
                 itemContent={serviceItemContent}
-                selectedId={selectedItem ? selectedItem.id : null} />
+                selectedId={selectedItem ? selectedItem.id : null}
+                maxVisible={props.maxVisible}
+                moreLabel={props.moreLabel} />
         </div>
     )
 }

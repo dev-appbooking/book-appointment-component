@@ -302,7 +302,7 @@ export function RescheduleBooking({ apiBase, eventDetails, organizationId, ltext
 
     return (
         <WidgetFrame title={getRawTextByKey('reschedule.title')} subtitle={getRawTextByKey('reschedule.subtitle')}
-                     stepper={stepper} footer={footer()}>
+                     stepper={stepper} footer={footer()} stepKey={rescheduleData.step}>
             { content() }
         </WidgetFrame>
     );

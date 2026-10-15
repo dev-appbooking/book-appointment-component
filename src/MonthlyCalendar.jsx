@@ -2,6 +2,12 @@ import { addDays, addMonths, getYear, getDay, getDaysInMonth, getMonth, isValid,
 import { useEffect, useState } from "react";
 import { LeftArrowIcon, RightArrowIcon } from "./utils/Utils";
 
+/*
+The short names of the week days, Monday first.
+*/
+export function weekDayLabels(ltext) {
+    return [ ltext.text('cal.wday.s.Mo'), ltext.text('cal.wday.s.Tu'), ltext.text('cal.wday.s.We'), ltext.text('cal.wday.s.Th'), ltext.text('cal.wday.s.Fr'), ltext.text('cal.wday.s.Su'), ltext.text('cal.wday.s.Sa') ];
+}
 
 export function MonthlyCalendar(props) { 
 const ltext = props.ltext;
@@ -93,7 +99,7 @@ function getMonthDaysContent() {
         aDay = addDays(aDay, 1);
     }
 
-    let daysHeaderLabel = [ ltext.text('cal.wday.s.Mo'), ltext.text('cal.wday.s.Tu'), ltext.text('cal.wday.s.We'), ltext.text('cal.wday.s.Th'), ltext.text('cal.wday.s.Fr'), ltext.text('cal.wday.s.Su'), ltext.text('cal.wday.s.Sa') ];
+    let daysHeaderLabel = weekDayLabels(ltext);
     return ( 
         <div> 
             <div className="appBookingCalHeader"> 

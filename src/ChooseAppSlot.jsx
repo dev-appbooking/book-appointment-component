@@ -3,6 +3,10 @@ import { useState, useEffect } from 'react';
 import { httpRequest } from './HttpRequest';
 import {formatLocalizedDateTime} from "./utils/formatters";
 import { MonthlyCalendar } from './MonthlyCalendar.jsx';
+import { WeekCalendar } from './WeekCalendar.jsx';
+
+// the parts of the day the slots are grouped in, by the hour they start before
+const dayParts = [ { id: 'morning', untilHour: 12 }, { id: 'afternoon', untilHour: 17 }, { id: 'evening', untilHour: 24 } ];
 
 /*
 The selected slot is held for this user, so the free slot search may leave it out.
@@ -102,20 +106,31 @@ let ChooseAppSlot = function(props) {
         const showAll = showMoreDays[daySlots[0].day] || daySlots.slice(props.initialSlotsPerDay).some(isSelected);
         const visibleSlots = showAll ? daySlots : daySlots.slice(0, props.initialSlotsPerDay);
 
+        const groups = dayParts.map( part => ({ ...part, slots: [] }) );
+        visibleSlots.forEach( slot => {
+            groups.find( group => new Date(slot.slot.startDate).getHours() < group.untilHour ).slots.push(slot);
+        });
+        const shownGroups = groups.filter( group => group.slots.length > 0 );
+
         return (
             <div className="appBookingTimeSlotsContainer">
                 <div className="appBookingDateLine"> {daySlots[0].day} </div>
-                <div className="appBookingTimeSlotsGrid">
-                    { visibleSlots.map( (slot) => {
-                            let buttonClass = "appBookingTimeSlotButton" + (isSelected(slot) ? " appBookingTimeSlotSelectedButton" : "");
-                            return ( <button className={buttonClass} type="button" key={slot.slot.startDate} aria-pressed={isSelected(slot)} onClick={() => { selectSlot(slot) }}> { slot.time } </button> )
-                        }) 
-                    }
-                    { (visibleSlots.length < daySlots.length) && (
-                            <button className="appBookingTimeSlotButton appBookingTimeSlotMoreButton" type="button" onClick={() => { selectShowMoreSlots(daySlots[0].day) }}> ... </button>
-                        )
-                    }
-                </div>
+                { shownGroups.map( (group, index) => (
+                    <div key={group.id} className={"appBookingTimeSlotsGroup appBookingTimeSlotsGroup_" + group.id}>
+                        <div className="appBookingTimeSlotsGroupLabel"> { props.rawTextByKey('step.slot.' + group.id) } </div>
+                        <div className="appBookingTimeSlotsGrid">
+                            { group.slots.map( (slot) => {
+                                    let buttonClass = "appBookingTimeSlotButton" + (isSelected(slot) ? " appBookingTimeSlotSelectedButton" : "");
+                                    return ( <button className={buttonClass} type="button" key={slot.slot.startDate} aria-pressed={isSelected(slot)} onClick={() => { selectSlot(slot) }}> { slot.time } </button> )
+                                })
+                            }
+                            { (index === shownGroups.length - 1) && (visibleSlots.length < daySlots.length) && (
+                                    <button className="appBookingTimeSlotButton appBookingTimeSlotMoreButton" type="button" onClick={() => { selectShowMoreSlots(daySlots[0].day) }}> ... </button>
+                                )
+                            }
+                        </div>
+                    </div>
+                )) }
             </div>
         )
     }
@@ -149,16 +164,32 @@ let ChooseAppSlot = function(props) {
         }) ();
     }, [props.skuId, props.specialistId, (props.scheduleIds || []).join(','), props.startDate] );
 
-    if (fetchingData.fetching) {
-        return ( <div className="appBookingChooseDate appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div> );
+    // while loading, the calendar has no available day and placeholders take the place of the slots
+    function loadingSlotsContent() {
+        return (
+            <div className="appBookingTimeSlotsContainer appBookingLoading" aria-busy="true">
+                <div className="appBookingDateLine appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div>
+                { ['morning', 'afternoon'].map( part => (
+                    <div key={part} className="appBookingTimeSlotsGroup">
+                        <div className="appBookingTimeSlotsGroupLabel"> { props.rawTextByKey('step.slot.' + part) } </div>
+                        <div className="appBookingTimeSlotsGrid">
+                            { [0, 1, 2, 3, 4, 5].map( index => ( <div key={index} className="appBookingSkeleton appBookingTimeSlotSkeleton"></div> )) }
+                        </div>
+                    </div>
+                )) }
+            </div>
+        );
     }
+
+    let availableDays = getAvailableDays();
     return (
         <div className="appBookingChooseDateContainer">
             <div className="appBookingChooseDate">
                 <div className="appBookingChooseDateCal">
-                    <MonthlyCalendar availableDays={getAvailableDays()} ltext={ltext} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} />
+                    <MonthlyCalendar availableDays={availableDays} ltext={ltext} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} />
+                    <WeekCalendar availableDays={availableDays} ltext={ltext} rawTextByKey={props.rawTextByKey} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} />
                 </div>
-                <div className="appBookingChooseDateSlots"> { getSuggestedSlotsContent() } </div>
+                <div className="appBookingChooseDateSlots"> { fetchingData.fetching ? loadingSlotsContent() : getSuggestedSlotsContent() } </div>
             </div>
             { props.notice && ( <div className="appBookingSlotNotice appBookingWarningText"> { props.notice } </div> ) }
             { props.children }
