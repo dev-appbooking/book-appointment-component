@@ -6,3 +6,4 @@ npm-debug.log
 /public/js/*.js
 stats.json
 /.claude
+/docs

@@ -22,7 +22,7 @@ function insertHeldSlotIntoFreeSlots(slots, selectedBookingSlot) {
 
 let ChooseAppSlot = function(props) {
     const [suggestedEvents, setSuggestedEvents] = useState([]);
-    const [fetchingData, setFetchingData] = useState({ fetching: false, status: 'not_fetched' });
+    const [fetchingData, setFetchingData] = useState({ fetching: true, status: 'not_fetched' });
     const [showMoreDays, setShowMoreDays] = useState({});
     const [ selectedDay, setSelectedDay ] = useState(null);
     let ltext = props.ltext;
@@ -40,7 +40,7 @@ let ChooseAppSlot = function(props) {
     function errorContent() {
         return (
             <div className="appBookingTimeSlotsContainer" >
-                { ltext.text('error.generic') }
+                { props.rawTextByKey('error.generic') }
             </div>
         )
     }
@@ -48,7 +48,7 @@ let ChooseAppSlot = function(props) {
     function noSlotsContent() {
         return (
             <div className="appBookingTimeSlotsContainer" >
-                <span className="appBookingWarningText"> { ltext.text('step.slot.noSlots') } </span>
+                <span className="appBookingWarningText"> { props.rawTextByKey('step.slot.noSlots') } </span>
             </div>
         )
     }
@@ -84,84 +84,38 @@ let ChooseAppSlot = function(props) {
             return noSlotsContent();
         }
 
-        let daysArray = [];
+        let daySlots = [];
         let usedSlots = {};
-        
         suggestedEvents.forEach( (slot) => {
-            if (!isEqual(selectedDay, startOfDay(slot.startDate))) {
-                return;
-            }
-
-            let day = formatLocalizedDateTime(new Date(slot.startDate), props.ltext.locale);
-            //let day = format( new Date(slot.startDate), "dd-LL-yyyy");
-            if ((daysArray.length === 0) || ((daysArray.length > 0) && (daysArray[daysArray.length - 1][0].day !== day))) {
-                
-                if (props.maxDaysToShow && (props.maxDaysToShow === daysArray.length)) {
-                    return;
-                }
-                daysArray.push([]);
-            }
-            if (slot.startDate in usedSlots) {
+            if (!isEqual(selectedDay, startOfDay(slot.startDate)) || (slot.startDate in usedSlots)) {
                 return;
             }
             usedSlots[slot.startDate] = 1;
-            // need to insert this slot into the right order
-            let x = 0;
-            for(x = 0; x < daysArray[daysArray.length-1].length; x++) {
-                if (new Date(daysArray[daysArray.length-1][x].slot.startDate).getTime() >= (new Date(slot.startDate).getTime())) {
-                    break;
-                }
-            }
-
-            daysArray[daysArray.length-1].splice(x, 0, { slot: slot, day: day, time: format( new Date(slot.startDate), "kk:mm") });
-            
+            daySlots.push({ slot: slot, day: formatLocalizedDateTime(new Date(slot.startDate), ltext.locale), time: format( new Date(slot.startDate), "HH:mm") });
         });
+        daySlots.sort( (a, b) => new Date(a.slot.startDate).getTime() - new Date(b.slot.startDate).getTime() );
+        if (daySlots.length === 0) {
+            return noSlotsContent();
+        }
+
+        const isSelected = (slot) => (props.selectedBookingSlot != null) && (props.selectedBookingSlot.slot.startDate === slot.slot.startDate);
+        const showAll = showMoreDays[daySlots[0].day] || daySlots.slice(props.initialSlotsPerDay).some(isSelected);
+        const visibleSlots = showAll ? daySlots : daySlots.slice(0, props.initialSlotsPerDay);
+
         return (
             <div className="appBookingTimeSlotsContainer">
-                <div className="appBookingTimeSlotsTitle"> { ltext.text('step.slot.chooseSlot') } </div>
-            { 
-                daysArray.map( (daySlots) => {
-                    let isThisDaySelected = props.selectedBookingSlot && (daySlots[0].day === props.selectedBookingSlot.day);
-                    let foundSelection = false;
-                    return (
-                            <div key={daySlots[0].day} >
-
-                                <div className="appBookingDateLine">
-                                    {daySlots[0].day}
-                                </div>
-                                <div class="appBookingItemsHorizontal appBookingItemsGrow1 appBookingItemsWrap">
-                                    { daySlots.map ( (slot, index) => {
-                                            if ((!showMoreDays[slot.day]) && (index >= props.initialSlotsPerDay)) {
-                                                if (!isThisDaySelected) {
-                                                    return; 
-                                                }
-                                                if (isThisDaySelected && foundSelection) {
-                                                    return;
-                                                }
-                                            }
-                                            
-                                            let selected = (props.selectedBookingSlot != null) && (slot.day === props.selectedBookingSlot.day) && (slot.time === props.selectedBookingSlot.time);
-                                            foundSelection = foundSelection || selected;
-                                            let buttonClass = "appBookingTimeSlotButton";
-                                            if (selected) {
-                                                buttonClass = "appBookingTimeSlotButton appBookingTimeSlotSelectedButton";
-                                            }
-                                            return ( <button className={buttonClass} type="button" key={slot.time} onClick={() => { selectSlot(slot) }}> { slot.time } </button> )
-                                        
-                                        }) 
-                                    }
-                                    {
-                                        ((! showMoreDays[daySlots[0].day] ) && (daySlots.length > props.initialSlotsPerDay)) && (
-                                                <button className="appBookingTimeSlotButton" type="button" onClick={() => { selectShowMoreSlots(daySlots[0].day) }}> ... </button>
-                                            )
-                                    }
-                                </div>
-                            </div>
-                    )
-                } )
-            }
-            { props.notice && ( <div className="appBookingSlotNotice appBookingWarningText"> { props.notice } </div> ) }
-            { props.children }
+                <div className="appBookingDateLine"> {daySlots[0].day} </div>
+                <div className="appBookingTimeSlotsGrid">
+                    { visibleSlots.map( (slot) => {
+                            let buttonClass = "appBookingTimeSlotButton" + (isSelected(slot) ? " appBookingTimeSlotSelectedButton" : "");
+                            return ( <button className={buttonClass} type="button" key={slot.slot.startDate} aria-pressed={isSelected(slot)} onClick={() => { selectSlot(slot) }}> { slot.time } </button> )
+                        }) 
+                    }
+                    { (visibleSlots.length < daySlots.length) && (
+                            <button className="appBookingTimeSlotButton appBookingTimeSlotMoreButton" type="button" onClick={() => { selectShowMoreSlots(daySlots[0].day) }}> ... </button>
+                        )
+                    }
+                </div>
             </div>
         )
     }
@@ -195,13 +149,19 @@ let ChooseAppSlot = function(props) {
         }) ();
     }, [props.skuId, props.specialistId, (props.scheduleIds || []).join(','), props.startDate] );
 
+    if (fetchingData.fetching) {
+        return ( <div className="appBookingChooseDate appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div> );
+    }
     return (
-        <div class="appBookingChooseDate">
-            {  !fetchingData.fetching && ( <div className="appBookingChooseDateCal"> 
-                                            <MonthlyCalendar availableDays={getAvailableDays()} ltext={ltext} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} /> 
-                                        </div>) }
-            { !fetchingData.fetching && ( <div className="appBookingChooseDateSlots"> { getSuggestedSlotsContent() }  </div> ) }
-            { !fetchingData.fetching && ( <div className="appBookingReserveBlockIcon"> </div> ) } 
+        <div className="appBookingChooseDateContainer">
+            <div className="appBookingChooseDate">
+                <div className="appBookingChooseDateCal">
+                    <MonthlyCalendar availableDays={getAvailableDays()} ltext={ltext} onSelectDay={onSelectDayInMonthlyCal} selectedDate={selectedDay} />
+                </div>
+                <div className="appBookingChooseDateSlots"> { getSuggestedSlotsContent() } </div>
+            </div>
+            { props.notice && ( <div className="appBookingSlotNotice appBookingWarningText"> { props.notice } </div> ) }
+            { props.children }
         </div>
     )
 }

@@ -1,242 +1,398 @@
+/*
+Default styles of the appBooking widget. Every element carries an appBooking* class meant to be
+overridden by the host site. Most of a rebrand is changing the variables below.
+The layout follows the width of the widget (container queries), not the width of the page.
+*/
 .appBookingWidget {
+    --appBookingAccent: #00897b;
+    --appBookingAccentDark: #00695f;
+    --appBookingAccentLight: #e6f4f2;
+    --appBookingText: #1f2328;
+    --appBookingTextMuted: #5b5b5b;
+    --appBookingTextDisabled: #b9bec6;
+    --appBookingBorder: #c9cdd2;
+    --appBookingPanel: #e9eef1;
+    --appBookingSurface: #fff;
+    --appBookingCalendar: #faf8f9;
+    --appBookingWarning: #d96724;
+    --appBookingDanger: #981b1b;
+    --appBookingError: #D32F2F;
+    --appBookingRadius: 12px;
+
     display: block;
+    container-type: inline-size;
+    color: var(--appBookingText);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.appBookingWidget *,
+.appBookingWidget *::before,
+.appBookingWidget *::after {
+    box-sizing: border-box;
+}
+
+.appBookingWidget button,
+.appBookingWidget input {
+    font-family: inherit;
 }
 
 .appBookingContainer {
-    padding: 16px;
-    border: 1px solid #99a1af;
-    border-radius: 4px;
-    background-color: #fbf9fa;
-    box-shadow: 0 0 10px 2px rgb(0 0 0 / 20%);
+    border-radius: var(--appBookingRadius);
+    background-color: var(--appBookingSurface);
+    box-shadow: 0 2px 12px rgb(0 0 0 / 18%);
+    overflow: hidden;
+}
+
+/* header */
+.appBookingHeader {
+    background-color: var(--appBookingAccent);
+    color: #fff;
+    padding: 16px 16px 14px;
 }
 
 .appBookingWidget .appBookingTitle {
-    font-size: 2em;
-    margin: 8px 0;
+    font-size: 1.45em;
+    line-height: 1.25;
 }
 
-.appBookingHorizontalBar {
-    border: 1px solid #99a1af;
-    border-top-width: 0;
+.appBookingSubtitle {
+    margin-top: 6px;
+    font-size: 0.85em;
+    opacity: 0.95;
 }
 
-.appBookingStepContainer {
-    margin: 16px 0;
+/* stepper */
+.appBookingStepper {
+    background-color: var(--appBookingPanel);
+    border-bottom: 1px solid var(--appBookingBorder);
+    padding: 14px 16px;
 }
 
-.appBookingActiveStepTitle {
-    padding-bottom: 8px;
-    line-height: 1.5em;
-}
-
-.appBookingList {
-    width: 100%;
-    display: grid;
-    gap: 8px;
-}
-
-.appBookingListItem, .appBookingListItemSimple {
-    width: 100%;
-    transition: box-shadow .2s linear;
-    background-color: #fff;
-    box-shadow: 0 0 0 1px #988168;
-}
-
-.appBookingListItem:hover {
-    box-shadow: 0px 0px 0px 2px #00695f;
-
-} 
-.appBookingListItemContent {
-    display:flex;
-    padding: 16px;
-}
-
-.appBookingContentGrow {
-    flex-grow: 1;
-}
-
-.appBookingSelectedItemIcon {
-    flex: none;
-    color: #00695f;
-    width: 24px;
-    height: 24px;
-}
-
-.appBookingStepSummary {
-    display:flex;
-}
-
-.appBookingStepSummaryContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+.appBookingStepperFull,
+.appBookingStepperCompact {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     align-items: center;
 }
 
-.appBookingStepTitle {
-    flex-grow: 1;
-    width: 100%;
-    color: #5b5b5b;
-    padding-bottom: 8px;
-}
-
-.appBookingStepContent {
-    flex-grow: 1;
-    width: 100%;
-}
-
-.appBookingStepEditBtn {
-    color: #51a2ff;
-    cursor:pointer;
-    background-color: rgba(0,0,0,0);
-    border-width: 0px;
-}
-.appBookingStepEditBtn:hover {
-    color: #155dfc;
-}
-
-.appBookingStepEditIcon {
-    width: 32px;
-    height: 32px;
-}
-
-.appBookingHidden {
+.appBookingStepperFull {
     display: none;
 }
 
-.appBookingServiceContainer {
+.appBookingStepperCompact {
+    display: flex;
+}
+
+.appBookingStepperItem {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    gap: 8px;
+    min-width: 0;
+    font-size: 0.8em;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingStepperItem:last-child {
+    flex: 0 0 auto;
+}
+
+.appBookingStepperBullet {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    font-size: 0.85em;
+}
+
+.appBookingStepperBullet svg {
+    width: 13px;
+    height: 13px;
+}
+
+.appBookingStepperLabel {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.appBookingStepperLine {
+    flex: 1 1 16px;
+    min-width: 12px;
+    height: 1px;
+    margin: 0 8px 0 4px;
+    background-color: var(--appBookingBorder);
+}
+
+.appBookingStepper_done .appBookingStepperBullet,
+.appBookingStepper_active .appBookingStepperBullet {
+    background-color: var(--appBookingAccent);
+    border-color: var(--appBookingAccent);
+    color: #fff;
+}
+
+.appBookingStepper_done .appBookingStepperLine {
+    background-color: var(--appBookingAccent);
+}
+
+.appBookingStepper_active .appBookingStepperLabel {
+    color: var(--appBookingAccent);
+    font-weight: 600;
+}
+
+/* body and footer */
+.appBookingBody {
+    padding: 20px 16px;
     display: flex;
     flex-direction: column;
+    gap: 16px;
+}
+
+.appBookingFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background-color: var(--appBookingPanel);
+    border-top: 1px solid var(--appBookingBorder);
+}
+
+.appBookingCtaButton,
+.appBookingSecondaryButton {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.appBookingCtaButton {
+    flex: 1 1 auto;
+    background-color: var(--appBookingAccent);
+    color: #fff;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+.appBookingCtaButton:hover:not([disabled]) {
+    background-color: var(--appBookingAccentDark);
+}
+
+.appBookingCtaButton[disabled] {
+    background-color: var(--appBookingTextDisabled);
+    box-shadow: none;
+    cursor: default;
+}
+
+.appBookingCtaButtonDanger:not([disabled]) {
+    background-color: var(--appBookingDanger);
+}
+
+.appBookingCtaButtonDanger:hover:not([disabled]) {
+    background-color: #841a1a;
+}
+
+.appBookingSecondaryButton {
+    flex: 0 0 auto;
+    background-color: var(--appBookingSurface);
+    border-color: #9fd3cc;
+    color: var(--appBookingAccent);
+}
+
+.appBookingSecondaryButton:hover:not([disabled]) {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingSecondaryButton[disabled] {
+    color: var(--appBookingTextDisabled);
+    cursor: default;
+}
+
+.appBookingSecondaryButtonDanger {
+    color: var(--appBookingDanger);
+    border-color: #e2b4b4;
+}
+
+.appBookingSecondaryButtonDanger:hover:not([disabled]) {
+    border-color: var(--appBookingDanger);
+}
+
+.appBookingStepTitle {
+    font-size: 1.15em;
+    color: var(--appBookingText);
+}
+
+.appBookingMessage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* selectable grids */
+.appBookingList {
     width: 100%;
+    display: grid;
+    gap: 10px;
+}
+
+.appBookingListItem {
     position: relative;
+    background-color: var(--appBookingSurface);
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color .15s linear, background-color .15s linear;
 }
 
-.appBookingServiceLabel {
-    position: absolute;
-    top: -16px;
-    right: -16px;
-    background: #a46622;
-    padding: 10px ;
+.appBookingListItem:hover,
+.appBookingListItem:focus-visible {
+    border-color: var(--appBookingAccent);
+    outline: none;
+}
+
+.appBookingActiveListItem {
+    background-color: var(--appBookingAccentLight);
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingList_tiles .appBookingListItemContent {
+    padding: 11px 12px;
     text-align: center;
-    color: white;
-    font-weight: bold;
+    font-weight: 500;
 }
 
-.appBookingChooseDateContainer {
+.appBookingList_cards .appBookingListItemContent {
+    padding: 14px 16px;
+}
+
+.appBookingTileText {
+    overflow-wrap: anywhere;
+}
+
+/* cards recalling the previous choices */
+.appBookingSelectionCard {
+    background-color: var(--appBookingAccentLight);
+    border: 1px solid var(--appBookingAccent);
+    border-radius: var(--appBookingRadius);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    width: 100%;
+    gap: 6px;
 }
 
-.appBookingServiceHeader {
+.appBookingSelectionCardInline {
+    text-align: center;
+}
+
+.appBookingSelectionCardTitle {
+    font-weight: 600;
+    font-size: 1.05em;
+}
+
+.appBookingSelectionLine {
     display: flex;
-    font-size: 1.2em;
-    margin-bottom: 8px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 1.05em;
 }
 
-.appBookingServiceSpecialist,
-.appBookingServiceResources {
-    margin-bottom: 8px;
+.appBookingSelectionLineLabel {
+    font-weight: 600;
 }
 
-.appBookingServicePrice {
-    color: #5b5b5b;
+.appBookingSelectionLineValue,
+.appBookingSelectionHighlight {
+    color: var(--appBookingAccent);
+    font-weight: 600;
 }
 
-.appBookingServicePrice .appBookingServiceOriginalPrice {
-    margin-right: 8px;
+.appBookingSelectionHighlight {
+    font-size: 1.1em;
 }
 
-.appBookingServicePrice .appBookingServicePromoPrice {
-    color: #a46622;
-    font-weight: bold;
-}
-.appBokingServiceLineItem {
+/* quick filters */
+.appBookingQuickFilters {
     display: flex;
-    flex-direction: row;
-    padding-bottom: 4px;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.appBokingServiceLineItem:last-child {
-    padding-bottom: 0px;
-}
-
-.appBookingServiceAttr {
+.appBookingQuickFilterGroup {
     display: flex;
-    flex: none;
-    color: #5b5b5b;
-    font-size: 0.8em;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.appBookingServiceAttrIcon {
-    flex: none;
-    width: 16px;
-    height: 16px;
-}
-.appBookingServiceAttrContent {
-    padding: 0px 8px 0px 4px;
-}
-
-.appBookingTimeSlotsContainer {
-    height: 100%;
-    padding: 16px 0px;
-}
-
-.appBookingTimeSlotsTitle {
-    margin-bottom: 16px;
-    color: #5b5b5b;
-}
-
-.appBookingDateLine {
-    margin: 8px 0px;
-    color: #5b5b5b;
-}
-.appBookingDateLineHeader {
-    color: #5b5b5b;
-    margin-bottom: 4px;
-    font-size: 0.8em;
-}
-
-.appBookingDateLineContent {
-    margin-bottom: 4px;
-}
-
-
-.appBookingTimeSlotButton {
-    padding: 8px;
-    width: 80px;
-    cursor: pointer;
-    border-width: 2px;
-    border-color: #00695f;
-    background-color: #fff;
-    border-radius: 4px;
-    font-size: 1em;
-    border-style: solid;
-}
-
-.appBookingMoreSlotsButton {
-    background-color: transparent;
-    border: 0px;
-    color: #155dfc;
-    cursor: pointer;
+.appBookingQuickFilterLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 0.9em;
 }
 
-.appBookingTimeSlotButton:hover {
-    color: #FFFFFF;
-    background-color: #00695f;
+.appBookingQuickFilterIcon,
+.appBookingQuickFilterIcon svg {
+    width: 18px;
+    height: 18px;
+    color: var(--appBookingTextMuted);
 }
 
-.appBookingTimeSlotSelectedButton {
-    background-color: #00695f;
-    color: #FFFFFF;
+.appBookingQuickFilterChips {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
+.appBookingChip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.appBookingChip:hover {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingChipSelected {
+    background-color: var(--appBookingAccent);
+    border-color: var(--appBookingAccent);
+    color: #fff;
+}
+
+.appBookingChipMore {
+    border-style: dashed;
+    color: var(--appBookingAccent);
+}
+
+.appBookingQuickFilterFacets,
 .appBookingFacetGroup {
-    background-color: #fff;
-    box-shadow: 0 0 0 1px #c9cbcf;
-    margin-bottom: 8px;
-    padding: 8px;
+    background-color: var(--appBookingSurface);
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+.appBookingQuickFilterFacets .appBookingFacetGroup {
+    border: 0;
+    padding: 0;
+}
+
+.appBookingFacetGroupHeader {
+    font-weight: 600;
 }
 
 .appBookingFacetGroupItem {
@@ -244,108 +400,460 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
-    color: #5b5b5b;
+    gap: 6px;
+    color: var(--appBookingTextMuted);
 }
 
-.appBookingFormFieldSet {
-    border-width: 0px;
-    padding: 0px 0px 8px 0px;
+/* service cards */
+.appBookingServices {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.appBookingFormInputLabel {
-   color: #99a1af;
-   font-size: 0.85em;
+.appBookingServiceContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    position: relative;
 }
 
-.appBookingFormInputText {
-    padding: 8px;
-    border-radius: 4px;
-    background-color: #fff;
-    border-width: 1px;
-    border-color: #99a1af;
-    width: calc(100% - 16px);
-    display: block;
-    line-height: 1.6em;
-    border-style: solid;
-    font-size: 1em;
-}
-.appBookingFormErrorText {
-    color: #D32F2F;
-    font-size: 0.85em;
-}
-.appBokingErrorIcon {
-    width: 32px;
-    height: 32px;
-    margin: 8px;
-}
-.appBookingErrorText {
-    color: #D32F2F;
-}
-.appBookingWarningText {
-    color: #d96724;
-}
-.appBookingSlotNotice,
-.appBookingReservationTimer {
-    padding-top: 16px;
-}
-.appBookingReservationTimerValue {
-    font-size: 1.25em;
+.appBookingServiceLabel {
+    position: absolute;
+    top: -14px;
+    right: -16px;
+    background: #a46622;
+    padding: 4px 10px;
+    border-radius: 0 6px 0 6px;
+    color: white;
+    font-size: 0.8em;
     font-weight: bold;
 }
 
-.appBookingFormInputCheckbox {
+.appBookingServiceHeader {
+    color: var(--appBookingAccent);
+    font-weight: 600;
+}
+
+.appBookingServiceSpecialist {
+    color: var(--appBookingTextMuted);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--appBookingBorder);
+}
+
+.appBookingServiceResources {
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingServiceMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.appBookingServiceAttr {
+    display: flex;
+    align-items: center;
+    color: var(--appBookingTextMuted);
+    font-size: 0.9em;
+}
+
+.appBookingServiceAttrIcon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.appBookingServiceAttrContent {
+    padding: 0 8px 0 6px;
+}
+
+.appBookingServiceAttrContent:first-child {
+    padding-left: 0;
+}
+
+.appBookingServicePrice {
+    color: var(--appBookingAccent);
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+.appBookingServicePrice .appBookingServiceOriginalPrice {
+    margin-right: 8px;
+    font-size: 0.8em;
+    font-weight: 400;
+}
+
+.appBookingServicePrice .appBookingServicePromoPrice {
+    color: #a46622;
+}
+
+.appBookingServiceSlots {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--appBookingBorder);
+}
+
+.appBookingDateLine {
+    color: var(--appBookingText);
+    font-weight: 500;
+}
+
+.appBookingDateLineHeader {
+    color: var(--appBookingTextMuted);
+    font-size: 0.8em;
+    font-weight: 400;
+}
+
+.appBookingMoreSlotsButton {
+    background-color: transparent;
+    border: 0;
+    color: var(--appBookingAccent);
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 4px;
+}
+
+.appBookingItemsHorizontal {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+/* date and time */
+.appBookingChooseDateContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.appBookingChooseDate {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.appBookingChooseDateCal,
+.appBookingChooseDateSlots {
+    width: 100%;
+}
+
+.appBookingCal {
+    background-color: var(--appBookingCalendar);
+    border-radius: 6px;
+    padding: 8px 8px 12px;
+}
+
+.appBookingCalHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.appBookingCalHeaderText {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.appBookingCalNavBtn {
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+    padding: 4px 8px;
+}
+
+.appBookingCalNavIcon {
     width: 20px;
     height: 20px;
-    margin-right: 0.8em;
+    color: #2f6fe4;
 }
 
-.appBookingFormFieldSetLine {
+.appBookingCalDays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    row-gap: 4px;
+}
+
+.appBookingCalWeekDays {
+    font-size: 0.85em;
+    margin-bottom: 4px;
+}
+
+.appBookingCalDay {
+    display: flex;
+    justify-content: center;
     align-items: center;
-    display: flex;
 }
 
-.appBookingCtaContainer {
-    margin: 16px 0;
-    display: flex;
-    gap: 8px;
-
+.appBookingCalDayBtn {
+    border: 2px solid transparent;
+    font-size: 0.9em;
+    background-color: transparent;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: var(--appBookingTextDisabled);
+    padding: 0;
 }
 
-.appBookingCtaButton {
-    padding: 8px 16px;
-    border-radius: 4px;
-    background-color: #99a1af;
-    border-width: 1px;
-    border-color: #99a1af;
+.appBookingCalDayBtnAvailable {
+    border-color: var(--appBookingAccentDark);
+    color: var(--appBookingAccentDark);
+    cursor: pointer;
+}
+
+.appBookingCalDayBtnAvailable:hover {
+    background-color: var(--appBookingAccentLight);
+}
+
+.appBookingWidget .appBookingCalDayBtnSelected {
+    background-color: var(--appBookingAccentDark);
+    border-color: var(--appBookingAccentDark);
+    color: #fff;
+}
+
+.appBookingCalDayBtnOtherMonth {
+    color: var(--appBookingTextDisabled);
+}
+
+.appBookingTimeSlotsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.appBookingTimeSlotsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.appBookingTimeSlotButton {
+    padding: 10px 12px;
+    min-width: 72px;
+    cursor: pointer;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.appBookingTimeSlotsGrid .appBookingTimeSlotButton {
+    padding: 14px 8px;
+}
+
+.appBookingTimeSlotButton:hover {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingWidget .appBookingTimeSlotSelectedButton {
+    background-color: var(--appBookingAccentLight);
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingSlotNotice {
+    font-size: 0.9em;
+}
+
+.appBookingReservationTimer {
+    font-size: 0.85em;
+}
+
+.appBookingReservationTimerValue {
+    font-weight: bold;
+}
+
+/* personal data */
+.appBookingForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.appBookingFormRow {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.appBookingFormField {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.appBookingFormFieldBox {
+    position: relative;
+}
+
+.appBookingFormInputLabel {
+    position: absolute;
+    top: -8px;
+    left: 8px;
+    padding: 0 4px;
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingTextMuted);
+    font-size: 0.75em;
+    line-height: 16px;
+}
+
+.appBookingFormInputText {
+    display: block;
     width: 100%;
-    border-style: solid;
+    padding: 13px 12px;
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 4px;
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
     font-size: 1em;
 }
 
-.appBookingCtaButton:not([disabled])
- {
-    background-color: #00695f;
-    color: #fff;
+.appBookingFormInputText:focus {
+    outline: none;
+    border-color: var(--appBookingAccent);
+    box-shadow: 0 0 0 1px var(--appBookingAccent);
 }
 
-.appBookingCtaButton:hover:not([disabled])
- {
-    background-color: #035d54;
-    color: #fff;
+.appBookingFormFieldInvalid .appBookingFormInputText {
+    border-color: var(--appBookingError);
 }
 
-.appBookingCtaButtonDanger:not([disabled]) {
-    background-color: #981b1b;
+.appBookingFormErrorText {
+    color: var(--appBookingError);
+    font-size: 0.85em;
+    margin-top: 4px;
 }
 
-.appBookingCtaButtonDanger:hover:not([disabled])
- {
-    background-color: #841a1a;
+.appBookingFormFieldSetLine {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.appBookingAttributesLine {
-    margin-bottom: 4px;
+.appBookingFormInputCheckbox {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--appBookingAccent);
+}
+
+.appBookingFormTermsLabel {
+    font-size: 0.9em;
+}
+
+.appBookingFormTermsLabel a {
+    color: var(--appBookingAccent);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.appBookingFormTermsLabel a:hover {
+    text-decoration: underline;
+}
+
+/* confirmation and booking details */
+.appBookingSuccessCard {
+    background-color: var(--appBookingAccentLight);
+    border: 1px solid var(--appBookingAccent);
+    border-radius: var(--appBookingRadius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+}
+
+.appBookingSuccessIcon {
+    width: 44px;
+    height: 44px;
+    color: var(--appBookingAccent);
+}
+
+.appBookingSuccessTitle {
+    font-weight: 600;
+    font-size: 1.05em;
+}
+
+.appBookingSuccessRefLabel {
+    color: var(--appBookingTextMuted);
+    font-size: 0.9em;
+}
+
+.appBookingSuccessRef {
+    color: var(--appBookingAccent);
+    font-weight: 600;
+    font-size: 1.1em;
+    letter-spacing: 0.04em;
+}
+
+.appBookingConfirmPanel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--appBookingDanger);
+    background-color: #fbeeee;
+    border-radius: var(--appBookingRadius);
+    padding: 16px;
+    color: var(--appBookingDanger);
+    font-weight: 500;
+}
+
+.appBookingConfirmPanelIcon {
+    flex: none;
+    width: 28px;
+    height: 28px;
+}
+
+.appBookingDetails {
+    background-color: var(--appBookingPanel);
+    border-radius: var(--appBookingRadius);
+    padding: 4px 16px;
+}
+
+.appBookingDetailsRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--appBookingBorder);
+}
+
+.appBookingDetailsRow:last-child {
+    border-bottom: 0;
+}
+
+.appBookingDetailsLabel {
+    color: var(--appBookingTextMuted);
+    font-size: 0.85em;
+}
+
+.appBookingDetailsValue {
+    overflow-wrap: anywhere;
+}
+
+/* texts */
+.appBokingErrorIcon {
+    flex: none;
+    width: 28px;
+    height: 28px;
+}
+
+.appBookingErrorText {
+    color: var(--appBookingError);
+}
+
+.appBookingWarningText {
+    color: var(--appBookingWarning);
 }
 
 .appBookingTextStrike {
@@ -353,175 +861,121 @@
 }
 
 .appBookingTextNotImportant {
-    color: #99a1af;
+    color: var(--appBookingTextMuted);
 }
 
-
-.appBookingItemsHorizontal {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
-    gap: 8px;
-}
-.appBookingItemsGrow0 {
-    flex-grow: 0;
-}
-.appBookingItemsGrow1 {
-    flex-grow: 1;
-}
-.appBookingItemsWrap {
-    flex-wrap: wrap;
-}
-
-.appBookingItemsVerical {
-    display: flex;
-    flex-direction: column;
-}
-
-.appBookingCal {
-    padding: 16px;
-}
-
-.appBookingCalHeader {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 16px;
-}
-
-.appBookingCalHeaderText {
-    flex-grow: 1;
-    font-size: 1.2em;
-    text-align: center;
-}
-
-.appBookingCalHeaderDay {
-    padding: 8px;
-}
-
-.appBookingCalDays {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    max-width: 450px;
-}
-.appBookingCalDay {
-    flex: 1 0 14.28%;
-    text-align: center;
-}
-
-.appBookingCalNavIcon {
-    width: 24px;
-    height: 24px;
-    color: #155dfc;
-}
-.appBookingCalNavBtn {
-    cursor: pointer;
-    background-color: rgba(0,0,0,0);
-    margin: 0 16px;
-    flex-grow: 0;
-    border: 0;
-}
-
-.appBookingCalDayBtn {
-    margin-top: 8px;
-    border: 0px; 
-    font-size: 1em;
-    background-color: transparent;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: #c6c6c6;
-}
-
-.appBookingCalDayBtnAvailable {
-    border: 2px solid #00695f;
-    color: #00695f;
-    cursor: pointer;
-}
-
-.appBookingCalDayBtnAvailable:hover {
-    background-color: #00695f;
-    color: #FFF;
-}
-
-.appBookingCalDayBtnSelected {
-    background-color: #00695f;
-    color: #FFF;
-}
-
-.appBookingCalDayBtnOtherMonth {
-    color: #c6c6c6;
-}
-
-.appBookingChooseDateCal {
-    width: 100%;
-}
-
-.appBookingChooseDateSlots {
-    width: 100%;
-}
-
-.appBookingChooseDate {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-.appBookingReserveBlockIcon {
-    width: 0px;
+.appBookingHidden {
     display: none;
 }
 
-/* Extra small devices (phones, 600px and down) */
-@media only screen and (max-width: 600px) {
+/* wide layouts */
+@container (min-width: 640px) {
+    .appBookingHeader {
+        padding: 20px 32px 16px;
+    }
 
-}
+    .appBookingWidget .appBookingTitle {
+        font-size: 1.9em;
+    }
 
-/* Small devices (portrait tablets and large phones, 600px and up) */
-@media only screen and (min-width: 600px) {
+    .appBookingStepper {
+        padding: 16px 32px;
+    }
 
-}
+    .appBookingStepperFull {
+        display: flex;
+    }
 
-/* Medium devices (landscape tablets, 768px and up) */
-@media only screen and (min-width: 768px) {
-    .appBookingList {
+    .appBookingStepperCompact {
+        display: none;
+    }
+
+    .appBookingBody {
+        padding: 32px;
+        gap: 20px;
+    }
+
+    .appBookingFooter {
+        padding: 20px 32px;
+    }
+
+    .appBookingCtaButton {
+        flex: 0 0 auto;
+    }
+
+    .appBookingList_tiles {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .appBookingList_cards {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .appBookingStepTitle {
-        width: 40%;
+
+    .appBookingSelectionCardInline {
+        align-self: flex-start;
+        text-align: left;
+        padding: 16px 24px;
     }
-    
-    .appBookingStepContent {
-        width: 60%;
-    }
-    .appBookingStepSummaryContainer {
-        margin-top: 0;
+
+    .appBookingSelectionLine {
         flex-direction: row;
+        gap: 8px;
     }
+
+    .appBookingQuickFilterGroup {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .appBookingQuickFilterLabel {
+        min-width: 100px;
+    }
+
+    .appBookingQuickFilterChips {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .appBookingQuickFilterFacets {
+        flex-basis: 100%;
+    }
+
+    .appBookingServiceMeta {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .appBookingServiceMeta .appBookingServiceAttr + .appBookingServiceAttr::before {
+        content: "•";
+        padding-right: 8px;
+    }
+
     .appBookingChooseDate {
         flex-direction: row;
+        align-items: flex-start;
     }
+
     .appBookingChooseDateCal {
-        width: 40%;
+        width: 45%;
+        max-width: 420px;
     }
+
     .appBookingChooseDateSlots {
-        width: 60%;    
+        flex: 1 1 0;
     }
-    .appBookingReserveBlockIcon {
-        width: 32px;
-        display: block;
-    }
-}
 
-/* Large devices (laptops/desktops, 992px and up) */
-@media only screen and (min-width: 992px) {
-    .appBookingCtaButton {
-        width: auto;
+    .appBookingFormRow {
+        flex-direction: row;
     }
-}
 
-/* Extra large devices (large laptops and desktops, 1200px and up) */
-@media only screen and (min-width: 1200px) {
-  
+    .appBookingDetailsRow {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .appBookingDetailsValue {
+        text-align: right;
+    }
 }

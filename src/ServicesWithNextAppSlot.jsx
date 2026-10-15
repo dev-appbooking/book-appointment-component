@@ -1,28 +1,25 @@
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { httpRequest } from './HttpRequest';
-import {formatLocalizedDateTime} from "./utils/formatters";
+import { formatLocalizedDateTime } from "./utils/formatters";
 import { CustomList } from './CustomList.jsx';
-import { FacetedFilter } from './FacetedFilter.jsx';
-import { configurableText } from './utils/Utils.js';
-import { ClockIcon } from './utils/Utils.js';
-import { LocationIcon } from './utils/Utils.js';
-import { XCircle } from './utils/Utils.js';
-import { ServicePrice } from './utils/Utils.js';
+import { QuickFilters } from './QuickFilters.jsx';
+import { ClockIcon, LocationIcon, UserIcon, ResourceIcon, ServicePrice } from './utils/Utils.js';
 import { optionResources, scheduleIdsForResources } from './utils/bookingData.js';
 
+/*
+The services in scope (department, specialist, restricted sku) as cards, each with its first available slots.
+Clicking a card selects the service, clicking one of its slots selects the service and that slot.
+*/
 let ServicesWithNextAppSlot = function(props) {
-    const [suggestedEvents, setSuggestedEvents] = useState([]);
+    const [suggestedEvents, setSuggestedEvents] = useState({});
     const [fetchingData, setFetchingData] = useState({ fetching: false, status: 'not_fetched' });
-    const [showMoreDays, setShowMoreDays] = useState({});
 
     let ltext = props.ltext;
     let specialists = {};
     let locations = {};
     let resources = {};
-    let services = { };
     let inScopeSkusData = [];
-    let selectedItemId = null;
 
         // if true it uses a single service sku no matter how many specialists asscociated
     let oneServicePerSkuAndSpecialists = ((props.appBookingConfigs && props.appBookingConfigs.oneServicePerSkuAndSpecialists) ? props.appBookingConfigs.oneServicePerSkuAndSpecialists : false );
@@ -31,18 +28,9 @@ let ServicesWithNextAppSlot = function(props) {
         if (props.restrictSkuId && String(sku.sku.skuid) !== String(props.restrictSkuId)) {
             return;
         }
-        sku.data.forEach( (itemData, index) => {
+        sku.data.forEach( (itemData) => {
             // check if the department from step 1 is set for this sku data
-            let foundDepartment = false;
-            if (props.departmentId && itemData.departments && (itemData.departments.length > 0)) {
-                for(let i = 0;i< itemData.departments.length; i++) {
-                    if (itemData.departments[i].id === props.departmentId) {
-                        foundDepartment = true;
-                        break;
-                    }
-                }
-            }
-            if ((! foundDepartment) && props.departmentId) {
+            if (props.departmentId && !(itemData.departments || []).some( d => d.id === props.departmentId )) {
                 return;
             }
 
@@ -51,7 +39,7 @@ let ServicesWithNextAppSlot = function(props) {
             {
                 return;
             }
-            
+
             let objSku = { id: `${sku.sku.skuid}_${itemData.location.id}_${itemSpecialistId}`, sku: sku.sku, location: itemData.location, specialist: itemData.specialist,
                            scheduleIds: itemData.scheduleIds || [], resourceSchedules: itemData.resourceSchedules || [] };
 
@@ -64,38 +52,25 @@ let ServicesWithNextAppSlot = function(props) {
                 objSku.specialist = { id: null };
             }
 
-            locations[itemData.location.id] = { id: itemData.location.id, value: `${itemData.location.name} (${itemData.location.city})` };
+            locations[itemData.location.id] = { id: itemData.location.id, value: itemData.location.name };
             optionResources(itemData).forEach( resource => {
                 resources[resource.id] = { id: resource.id, value: resource.name || String(resource.id) };
             });
-            services[sku.sku.name] = { id: sku.sku.name, value: sku.sku.name };
 
             if (!oneServicePerSkuAndSpecialists) {
                 inScopeSkusData.push( objSku );
             } else {
                 // check if inScopeSkusData already has this sku and location
-                let foundSku = false;
-                for(let i=0; i< inScopeSkusData.length; i++) {
-                    if ((inScopeSkusData[i].sku.skuid === objSku.sku.skuid) && (inScopeSkusData[i].location.id === objSku.location.id)) {
-                        // one item for all the specialists, so its slots come from all their schedules
-                        inScopeSkusData[i].scheduleIds = Array.from(new Set([ ...inScopeSkusData[i].scheduleIds, ...objSku.scheduleIds ]));
-                        foundSku = true;
-                        break;
-                    }
-                }
-                if (!foundSku) {
+                let found = inScopeSkusData.find( item => (item.sku.skuid === objSku.sku.skuid) && (item.location.id === objSku.location.id) );
+                if (found) {
+                    // one item for all the specialists, so its slots come from all their schedules
+                    found.scheduleIds = Array.from(new Set([ ...found.scheduleIds, ...objSku.scheduleIds ]));
+                } else {
                     inScopeSkusData.push( objSku );
                 }
             }
-
-            if (objSku.sku.skuid === props.skuId && objSku.location.id === props.locationId && (objSku.specialist ? objSku.specialist.id : null) === props.specialistId) {
-                selectedItemId = objSku.sku.skuid;
-            }
         });
     });
-    if (!selectedItemId && (props.specialistId === props.specialistAnyID)) {
-        
-    }
 
     // filtering on resources narrows the slot search of every service to the selected resources
     let resourceSelection = props.filterSelections && props.filterSelections['resources'];
@@ -106,197 +81,120 @@ let ServicesWithNextAppSlot = function(props) {
         }).filter(Boolean);
     }
 
-    function selectSlot(slot) {
-        if (props.onSelectSlot) {
-            props.onSelectSlot(slot);
-        }
-    }
-
-    function selectShowMoreSlots(dayStr) {
-        setShowMoreDays( {...showMoreDays, [dayStr]: true } );
-    }
-
-    function errorContent() {
-        return (
-            <div className="appBookingTimeSlotsContainer" >
-                { ltext.text('error.generic') }
-            </div>
-        )
-    }
-    
-    function noSlotsContent() {
-        return (
-            <div className="appBookingTimeSlotsContainer" >
-                <span className="appBookingWarningText"> { ltext.text('step.slot.noSlots') } </span>
-            </div>
-        )
-    }
-    function onChangeFacetedFilter(filterGroupId, filterItemId) {
-        if (props.onChangeFacetedFilter) {
-            props.onChangeFacetedFilter(filterGroupId, filterItemId)
-        }
-    }
+    let selected = props.selectedService || {};
+    let selectedItem = inScopeSkusData.find( item => (item.sku.id === selected.skuId) && (item.location.id === selected.locationId) &&
+                                                      ((item.specialist ? item.specialist.id : null) === selected.specialistId) );
 
     function filteredServices(skus, filterSelections) {
-        // filterSelections is an object whos keys are 'specialists', 'locations', 'resources', 'services' and each of these map with on object who's keys are the filter selections (ids)
-        
-        function sortByFirstAvailableSlot(skusArray) {
-            if (Object.keys(suggestedEvents).length === 0) {
-                return skusArray; 
-            }
-            // we have the suggested events so sort services asc by the fisrt available slot
+        // filterSelections is an object whos keys are 'specialists', 'locations', 'resources' and each of these map with on object who's keys are the filter selections (ids)
 
-            skusArray.forEach( sku => {
-                // suggestedEvents is keyed by the composite client id sent in filterSkuData
-                // (`${skuid}_${locationId}_${specialistId}`), which is exactly sku.id here.
-                if (sku.id in suggestedEvents) {
-                    if (suggestedEvents[sku.id].length === 0) {
-                        sku.firstSlot = null;
-                    }
-                    else {
-                        let firstSlot = new Date(suggestedEvents[sku.id][0].startDate);
-                        sku.firstSlot = firstSlot;
-                    }
-                } else {
-                    sku.firstSlot = null;
-                }
-            });
+        function firstSlotOf(sku) {
+            let slots = suggestedEvents[sku.id];
+            return (slots && slots.length > 0) ? new Date(slots[0].startDate) : null;
+        }
 
-            // order by available slots
-            return skusArray.sort( (a, b) => {
-                if (a.firstSlot && b.firstSlot) {
-                    return a.firstSlot - b.firstSlot;
-                }  else if (a.firstSlot) { 
-                    return -1;
-                } else if (b.firstSlot) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            });
-        }
-        
-        if (Object.keys(filterSelections).length === 0) {
-            // there are no filters so just return everything
-            return sortByFirstAvailableSlot(skus);
-        }
-        let result = [];
-        skus.forEach( sku => {
+        let result = skus.filter( sku => {
             if (filterSelections['specialists'] && (! sku.specialist || ! filterSelections['specialists'][sku.specialist.id])) {
-                return; // the specialist for this sku is not selected in the filter so just return
+                return false; // the specialist for this sku is not selected in the filter
             }
             if (filterSelections['locations'] && (! filterSelections['locations'][sku.location.id])) {
-                return; // the location for this sku is not selected in the filter so just return
+                return false; // the location for this sku is not selected in the filter
             }
-            if (filterSelections['services'] && (! filterSelections['services'][sku.sku.name])) {
-                return; // the location for this sku is not selected in the filter so just return
-            }
-            // we got this far so the sku passes the filter
-            result.push(sku);
+            return true;
         });
 
-
-        if (Object.keys(suggestedEvents).length === 0) {
-            return result; 
-        }
-        return sortByFirstAvailableSlot(result);
+        // order by the first available slot, services without slots last
+        return result.sort( (a, b) => {
+            let slotA = firstSlotOf(a);
+            let slotB = firstSlotOf(b);
+            if (slotA && slotB) {
+                return slotA - slotB;
+            }
+            return (slotA ? -1 : 0) + (slotB ? 1 : 0);
+        });
     }
 
     function onSelectService(serviceItem) {
-        if (props.onSelectMoreSlots) {
-            props.onSelectMoreSlots(serviceItem);
+        if (props.onSelectService) {
+            props.onSelectService(serviceItem);
         }
     }
 
-    function onSelectServiceAnsSlot(serviceItem, slot) {
-        if (props.onSelectServiceAndSlot) {
-            props.onSelectServiceAndSlot(serviceItem, slot);
-        }
+    function isSelectedSlot(item, slot) {
+        return !!selectedItem && (selectedItem.id === item.id) && !!props.selectedBookingSlot &&
+               (props.selectedBookingSlot.slot.startDate === slot.startDate);
     }
 
     function serviceItemContent(item, isSelected) {
-    
+
         function getSpecialistContent() {
-            if ((props.configs && (props.configs.showSpecialistNameOnServiceItem === false)) || !props.specialistFullName(item.specialist)) {
+            if ((props.appBookingConfigs && (props.appBookingConfigs.showSpecialistNameOnServiceItem === false)) || !props.specialistFullName(item.specialist)) {
                 return;
             }
             return (
-                <div className="appBokingServiceLineItem appBookingServiceSpecialist"> { props.specialistFullName(item.specialist) } </div>
+                <div className="appBookingServiceSpecialist"> { props.specialistFullName(item.specialist) } </div>
                 )
         }
 
         function getAvailableSlots(record) {
-            if (!(record.id in suggestedEvents)) {
-                return ( <div className="appBookingWarningText"> { ltext.text('step.slot.noSlotShort') } </div> )
+            if (fetchingData.fetching) {
+                return ( <div className="appBookingTextNotImportant"> { props.rawTextByKey('loading') } </div> )
             }
-            let slotsForItem = suggestedEvents[record.id];
-            if ((slotsForItem.length === 0)) {
-                return ( <div className="appBookingWarningText"> { ltext.text('step.slot.noSlotShort') } </div> )
-            }
-            let selected = false;
-            let buttonClass = "appBookingTimeSlotButton";
-            if (selected) {
-                buttonClass = "appBookingTimeSlotButton appBookingTimeSlotSelectedButton";
+            let slotsForItem = suggestedEvents[record.id] || [];
+            if (slotsForItem.length === 0) {
+                return ( <div className="appBookingWarningText"> { props.rawTextByKey('step.slot.noSlotShort') } </div> )
             }
 
             let slots = [];
             let day = null;
             for(let i = 0; i< Math.min(slotsForItem.length, props.maxSlotsPerItem); i++) {
-                if (day === null) {
-                    day = formatLocalizedDateTime(new Date(slotsForItem[i].startDate), ltext.locale);
-                }
                 let currentDay = formatLocalizedDateTime(new Date(slotsForItem[i].startDate), ltext.locale);
+                if (day === null) {
+                    day = currentDay;
+                }
                 if (day !== currentDay) {
                     break;
                 }
-                slots.push( { slot: slotsForItem[i], day: day, time: format( new Date(slotsForItem[i].startDate), "kk:mm") })
+                slots.push( { slot: slotsForItem[i], day: day, time: format( new Date(slotsForItem[i].startDate), "HH:mm") })
             }
             let hasMoreSlots = slots.length < slotsForItem.length;
 
-            return ( <div className="appBookingItemsVerical appBooking"> 
-
+            return ( <div className="appBookingServiceSlots">
                         <div className="appBookingDateLine">
-                            <div className="appBookingDateLineHeader"> Primul loc disponibil </div>
+                            <div className="appBookingDateLineHeader"> { props.rawTextByKey('step.service.firstSlot') } </div>
                             <div className="appBookingDateLineContent"> {day} </div>
                         </div>
                         <div className="appBookingItemsHorizontal" >
                                 { slots.map( slot => {
-                                    return ( <button className={buttonClass} type="button" key={slot.time} onClick={() => { onSelectServiceAnsSlot(item, slot) }}> { slot.time } </button> )
+                                    let buttonClass = "appBookingTimeSlotButton" + (isSelectedSlot(item, slot.slot) ? " appBookingTimeSlotSelectedButton" : "");
+                                    return ( <button className={buttonClass} type="button" key={slot.time}
+                                                     onClick={(e) => { e.stopPropagation(); props.onSelectServiceAndSlot(item, slot) }}> { slot.time } </button> )
                                 }) }
-                                { hasMoreSlots && <button className="appBookingMoreSlotsButton" type="button" onClick={() => { onSelectService(item) }}> { ltext.text('step.slot.showMore')} </button> }
+                                { hasMoreSlots && <button className="appBookingMoreSlotsButton" type="button"
+                                                          onClick={(e) => { e.stopPropagation(); props.onSelectMoreSlots(item) }}> { props.rawTextByKey('step.slot.showMore') } </button> }
                         </div>
             </div> );
         }
-        
+
         function getLabelContent() {
             if (item.sku.attributes && item.sku.attributes.labels && (item.sku.attributes.labels.length > 0)) {
-                return <div class="appBookingServiceLabel"> { item.sku.attributes.labels[0] } </div>
+                return <div className="appBookingServiceLabel"> { item.sku.attributes.labels[0] } </div>
             }
         }
         return (<div className="appBookingServiceContainer">
             { getLabelContent() }
-            <div className="appBokingServiceLineItem appBookingServiceHeader">
-                <div className="appBookingContentGrow"> { item.sku.name } </div>
-                { isSelected && <div className="appBookingSelectedItemIcon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                    </div>
-                }
-            </div>
+            <div className="appBookingServiceHeader"> { item.sku.name } </div>
             { getSpecialistContent() }
 
-            <div className="appBokingServiceLineItem">
+            <div className="appBookingServiceMeta">
                 <div className="appBookingServiceAttr">
                     <div className="appBookingServiceAttrIcon">
                         <ClockIcon />
                     </div>
                     <div className="appBookingServiceAttrContent">
-                            { item.sku.duration } minute
+                        { ltext.textValue(props.rawTextByKey('service.minutes'), item.sku.duration) }
                     </div>
-
                 </div>
-
                 <div className="appBookingServiceAttr">
                     <div className="appBookingServiceAttrIcon">
                         <LocationIcon />
@@ -308,69 +206,54 @@ let ServicesWithNextAppSlot = function(props) {
             </div>
             <ServicePrice sku={ item.sku } />
 
-            <div className="appBokingServiceLineItem"> 
-                { getAvailableSlots(item) }
-            </div>
+            { getAvailableSlots(item) }
 
         </div>)
     }
 
-    function getServicesContent() {
-        let hasFilters = (Object.keys(specialists).length > 1) || (Object.keys(locations).length > 1) || (Object.keys(resources).length > 1);
-        let filterData = { items: props.allSkus, filterItems: [ { id: 'specialists', title_key: 'filter.specialists', values: Object.values(specialists) },
-                                                                { id: 'locations', title_key: 'filter.locations', values: Object.values(locations) },
-                                                                { id: 'resources', title_key: 'filter.resources', values: Object.values(resources) },
-                                                                { id: 'services', title_key: 'filter.services', values: Object.values(services) } ],
-                                filterSelections: props.filterSelections
-                            } ;
-        return (
-        <div>
-            <div className="appBookingStepTitle appBookingActiveStepTitle"> { ltext.textValue(configurableText('step.service', props.appBookingConfigs, ltext),  props.stepIndex + 1) } </div>
-                { (hasFilters) && <FacetedFilter filterData={ filterData } onChange={onChangeFacetedFilter} ltext={ltext}/> }
-                <CustomList
-                    items={ filteredServices(inScopeSkusData, props.filterSelections) } onSelectItem1={onSelectService}
-                    expand={true}
-                    itemContent={serviceItemContent}
-                    selectedId={selectedItemId}
-                    ltext={ltext} />
-        </div>
-        )
-    }
-
     useEffect( () => {
-        ( async () => { 
+        ( async () => {
             try {
 
                 setFetchingData({ fetching: true, status: 'not_fetched' });
                 let bodyReq = {
-                    filterSkuData: [],
+                    filterSkuData: inScopeSkusData.map( skuData => ({ id: skuData.id, skuId: skuData.sku.id, scheduleIds: skuData.scheduleIds }) ),
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     organizationId: props.organizationId
                 }
-                inScopeSkusData.forEach( skuData => {
-                    bodyReq.filterSkuData.push( { id: skuData.id,
-                                            skuId: skuData.sku.id,
-                                            scheduleIds: skuData.scheduleIds
-                                        });
-                });
                 if (bodyReq.filterSkuData.length === 0) {
                     setSuggestedEvents({});
                     setFetchingData({ fetching: false, status: 'success' });
                     return;
                 }
                 let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
-                setSuggestedEvents(res);
+                setSuggestedEvents(res || {});
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {
+                setSuggestedEvents({});
                 setFetchingData({ fetching: false, status: 'error' });
             }
         }) ();
-    }, [props.skuId, props.locationId, props.specialistId, props.startDate, Object.keys(resourceSelection || {}).sort().join(',')] );
+    }, [props.departmentId, props.specialistId, props.restrictSkuId, props.refreshKey, Object.keys(resourceSelection || {}).sort().join(',')] );
 
-    return (<>
-        { !fetchingData.fetching && getServicesContent() }
-        { fetchingData.fetching && (<div>...</div>) }
-    </>)
+    let filterGroups = [ { id: 'specialists', label_key: 'filter.specialist', title_key: 'filter.specialists', icon: <UserIcon />, values: Object.values(specialists) },
+                         { id: 'resources', label_key: 'filter.resource', title_key: 'filter.resources', icon: <ResourceIcon />, values: Object.values(resources) },
+                         { id: 'locations', label_key: 'filter.location', title_key: 'filter.locations', icon: <LocationIcon />, values: Object.values(locations) } ];
+
+    return (
+        <div className="appBookingServices">
+            <QuickFilters groups={filterGroups} filterSelections={props.filterSelections || {}} onChange={props.onChangeFacetedFilter}
+                          ltext={ltext} rawTextByKey={props.rawTextByKey} maxVisible={2} />
+            <div className="appBookingStepTitle"> { props.title } </div>
+            { (fetchingData.status === 'error') && <div className="appBookingErrorText"> { props.rawTextByKey('error.generic') } </div> }
+            <CustomList
+                variant="cards"
+                items={ filteredServices(inScopeSkusData, props.filterSelections || {}) }
+                onSelectItem={onSelectService}
+                itemContent={serviceItemContent}
+                selectedId={selectedItem ? selectedItem.id : null} />
+        </div>
+    )
 }
 
 export { ServicesWithNextAppSlot }
