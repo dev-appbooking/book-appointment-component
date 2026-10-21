@@ -146,7 +146,7 @@ let ChooseAppSlot = function(props) {
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     organizationId: props.organizationId
                 }
-                let slotsByItem = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
+                let slotsByItem = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/availableSlots", bodyReq, { 'content-type': 'application/json'});
                 let res = insertHeldSlotIntoFreeSlots((slotsByItem && slotsByItem[itemId]) || [], props.selectedBookingSlot);
                 setSuggestedEvents(res);
                 //set the selection as the first option 
