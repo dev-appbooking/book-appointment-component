@@ -238,7 +238,7 @@ let ServicesWithNextAppSlot = function(props) {
                     setFetchingData({ fetching: false, status: 'success' });
                     return;
                 }
-                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/nextFreeSlotWithFilter2", bodyReq, { 'content-type': 'application/json'});
+                let res = await httpRequest('POST', props.apiBase + "/api/integration/" + props.integrationId + "/appointment/availableSlots", bodyReq, { 'content-type': 'application/json'});
                 setSuggestedEvents(res || {});
                 setFetchingData({ fetching: false, status: 'success' });
             } catch (e) {

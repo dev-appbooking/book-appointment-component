@@ -9,7 +9,7 @@ The widget works with bookable options: { sku, data: [ { specialist, location, d
 - the customer picks the specialist: one option per schedule of the first group that has specialists.
   The other groups are left to the server, limited to their schedules at the same location.
 - a sku that needs no specialist gets one option per location, with `specialist: null`.
-`scheduleIds` is what the slot search (nextFreeSlotWithFilter2) is narrowed to.
+`scheduleIds` is what the slot search (availableSlots) is narrowed to.
 `resourceSchedules` holds, per group, the resources the option can use: [ [ { resource, scheduleId } ] ].
 */
 
