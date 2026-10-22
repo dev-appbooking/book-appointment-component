@@ -1244,3 +1244,412 @@ overflow: hidden or auto they scroll along with the rest of the widget.
         text-align: right;
     }
 }
+
+/* desk booking: days, start time and desk */
+.appBookingDeskDaysSelection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.appBookingDeskDaysCount {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.appBookingLinkButton {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--appBookingAccentDark);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+}
+
+.appBookingDeskDaysCal {
+    width: 100%;
+}
+
+.appBookingDeskCalError {
+    margin-top: 8px;
+    font-size: 0.85em;
+}
+
+.appBookingDeskTimeButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.appBookingDeskTimeFree {
+    font-size: 0.75em;
+    font-weight: 400;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingDeskTimeButton:disabled,
+.appBookingDeskButton:disabled {
+    cursor: default;
+    color: var(--appBookingTextDisabled);
+    background-color: var(--appBookingCalendar);
+    border-color: var(--appBookingPanel);
+}
+
+.appBookingDeskTimeButton:disabled .appBookingDeskTimeFree {
+    color: var(--appBookingTextDisabled);
+}
+
+.appBookingDeskContainer,
+.appBookingDeskAreas {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.appBookingDeskArea {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.appBookingDeskAreaHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.appBookingDeskAreaColor {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.appBookingDeskAreaFree {
+    font-size: 0.85em;
+    font-weight: 400;
+}
+
+.appBookingDeskGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 10px;
+}
+
+.appBookingDeskButton {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+    border-radius: 6px;
+    font-size: 1em;
+}
+
+.appBookingDeskButton:hover:not(:disabled) {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingWidget .appBookingDeskButtonSelected {
+    background-color: var(--appBookingAccentLight);
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingDeskLabel {
+    font-weight: 600;
+}
+
+.appBookingDeskKind,
+.appBookingDeskAttrs {
+    font-size: 0.8em;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingDeskPrice {
+    font-size: 0.85em;
+}
+
+.appBookingDeskButton:disabled .appBookingDeskKind,
+.appBookingDeskButton:disabled .appBookingDeskAttrs {
+    color: var(--appBookingTextDisabled);
+}
+
+.appBookingDeskGrid .appBookingDeskSkeleton {
+    height: 72px;
+}
+
+.appBookingDeskUnavailable {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+    font-size: 0.9em;
+}
+
+@container (min-width: 640px) {
+    .appBookingDeskDaysCal {
+        width: 45%;
+        max-width: 420px;
+    }
+}
+
+/* event booking (concert tickets, trainings): events, seats, standing places and places */
+.appBookingListItemDisabled,
+.appBookingListItemDisabled:hover {
+    cursor: default;
+    border-color: var(--appBookingPanel);
+    background-color: var(--appBookingCalendar);
+}
+
+.appBookingListItemDisabled .appBookingServiceHeader,
+.appBookingListItemDisabled .appBookingServiceMeta {
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingEventOption .appBookingServiceHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.appBookingEventBadge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--appBookingWarning);
+    border: 1px solid currentColor;
+}
+
+.appBookingEventSchedule {
+    margin-top: 8px;
+    font-size: 0.9em;
+}
+
+.appBookingEventScheduleTitle {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.appBookingEventSessions {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appBookingEventSessionLabel {
+    display: inline-block;
+    min-width: 64px;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingSeatContainer,
+.appBookingSeatAreas,
+.appBookingPlacesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.appBookingSeatArea {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.appBookingSeatAreaName {
+    font-weight: 500;
+}
+
+.appBookingSeatAreaPrice {
+    font-size: 0.85em;
+    font-weight: 400;
+}
+
+.appBookingSeatRows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.appBookingSeatRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.appBookingSeatRowLabel {
+    flex: 0 0 24px;
+    text-align: right;
+    font-size: 0.8em;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingSeatRowSeats {
+    display: flex;
+    gap: 4px;
+}
+
+.appBookingSeat {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.75em;
+    font-weight: 500;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+    border-radius: 6px 6px 3px 3px;
+}
+
+.appBookingSeat:hover:not(:disabled) {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingWidget .appBookingSeatSelected {
+    background-color: var(--appBookingAccent);
+    border-color: var(--appBookingAccent);
+    color: var(--appBookingSurface);
+}
+
+.appBookingSeat_wheelchair,
+.appBookingSeat_companion {
+    border-style: dashed;
+    border-color: var(--appBookingAccentDark);
+}
+
+.appBookingSeat_restricted_view {
+    border-style: dotted;
+}
+
+.appBookingWidget .appBookingSeatTaken,
+.appBookingSeat:disabled {
+    cursor: default;
+    color: var(--appBookingTextDisabled);
+    background-color: var(--appBookingPanel);
+    border-color: var(--appBookingPanel);
+}
+
+.appBookingSeatLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 0.8em;
+    color: var(--appBookingTextMuted);
+}
+
+.appBookingSeatLegendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.appBookingSeatLegend .appBookingSeatSample {
+    width: 16px;
+    height: 16px;
+    cursor: default;
+}
+
+.appBookingSeatStanding,
+.appBookingPlaces {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    background-color: var(--appBookingSurface);
+}
+
+.appBookingPlacesInfo,
+.appBookingPlacesPrice {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.appBookingPlacesLabel,
+.appBookingPlacesTotal {
+    font-weight: 500;
+}
+
+.appBookingPlacesLeft,
+.appBookingPlacesHint {
+    font-size: 0.85em;
+}
+
+.appBookingQuantity {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.appBookingQuantityButton {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    border: 1px solid var(--appBookingBorder);
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+    border-radius: 6px;
+}
+
+.appBookingQuantityButton:hover:not(:disabled) {
+    border-color: var(--appBookingAccent);
+}
+
+.appBookingQuantityButton:disabled {
+    cursor: default;
+    color: var(--appBookingTextDisabled);
+    background-color: var(--appBookingCalendar);
+}
+
+.appBookingQuantityValue {
+    min-width: 32px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.appBookingEventUnits {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 0.9em;
+}
+
+.appBookingEventTotal {
+    font-weight: 600;
+}
+
+.appBookingEventKeepRef {
+    margin-top: 6px;
+    font-size: 0.85em;
+}

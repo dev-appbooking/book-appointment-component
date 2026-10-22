@@ -1,13 +1,17 @@
 const path = require('path');
 
 module.exports = {
-  entry: path.join(__dirname, "src", "AppBookingPublic.jsx"),
+  entry: {
+    appBookingPublic: path.join(__dirname, "src", "AppBookingPublic.jsx"),
+    appBookingDesks: path.join(__dirname, "src", "AppBookingDesks.jsx"),
+    appBookingEvents: path.join(__dirname, "src", "AppBookingEvents.jsx")
+  },
   mode: "development",
   output: {
-    filename: 'appBookingPublic.js',
+    filename: '[name].js',
     path:path.resolve(__dirname, "public/js/"),
     libraryTarget: 'umd',
-    library: 'appBookingPublic',
+    library: '[name]',
     umdNamedDefine: true
   },
   externals: {

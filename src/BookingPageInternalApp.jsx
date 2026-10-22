@@ -18,6 +18,7 @@ import { ChoicesSummary } from './ChoicesSummary.jsx';
 import { Stepper } from './Stepper.jsx';
 import { SelectionCard } from './SelectionCard.jsx';
 import { DetailsTable } from './DetailsTable.jsx';
+import { emptyCustomerData, customerDataAfterChange, customerDataAfterBlur, isCustomerDataComplete } from './utils/customerData.js';
 import { bookingOptionsFromV2, buildCatalog, assignedOwnerNames, slotOwnerNames, specialistFullName } from './utils/bookingData.js';
 
 // the steps grouped together by the compact stepper of narrow layouts
@@ -36,7 +37,7 @@ function emptySelections() {
         step_choose_specialist: { specialistId: null },
         step_choose_service: { skuId: null, locationId: null, specialistId: null, scheduleIds: [], filterSelections: { } },
         step_choose_slot: { bookingSlot: null },
-        step_personal_data: { name: '', mobile: '', email: '', acceptTerms: false, errors: { } },
+        step_personal_data: emptyCustomerData(),
         step_confirmation: { bookingConfirmationId: null }
     };
 }
@@ -543,68 +544,11 @@ export function BookingPageInternalApp (props) {
     }
 
     function onChangeCustomerData(property, e) {
-        let value = e.target.value;
-        let errors = JSON.parse(JSON.stringify(bookingData.step_personal_data.errors));
-        if (property === 'acceptTerms') {
-            value = ! bookingData.step_personal_data.acceptTerms;
-            if (e.target.checked === true) {
-                delete errors[property];
-            }
-        } else {
-            if (value.length > 0) {
-                delete errors[property];
-            }
-        }
-        setBookingData( { ...bookingData, step: 'step_personal_data', step_personal_data: { ...bookingData.step_personal_data, [property]: value, errors: errors } } );
+        setBookingData( { ...bookingData, step: 'step_personal_data', step_personal_data: customerDataAfterChange(bookingData.step_personal_data, property, e) } );
     }
 
     function onBlurCustomerData(property, e) {
-        let value = e.target.value;
-        let errors = JSON.parse(JSON.stringify(bookingData.step_personal_data.errors));
-        if (property === 'acceptTerms') {
-            if (e.target.checked === false) {
-                errors['acceptTerms'] = 'error.terms_not_accepted';
-            }
-        }  else {
-            value = value.trim();
-            
-            
-            if (property === 'name') {
-                if ((value.length < 3) && mandatoryPersonalData.includes(property)) {
-                        errors['name'] = 'error.name_empty';
-                } else if (value.length > 30) {
-                    errors['name'] = 'error.name_too_long';
-                } else if  (false === (/^[a-zA-Z\-''_0-9 ]{3,}$/.test(value))) {
-                    errors['name'] = 'error.name_invalid';
-                }
-
-            } else if (property === 'email') {
-                if (value.length === 0) { 
-                    if (mandatoryPersonalData.includes(property)) {
-                        errors['email'] = 'error.email_empty';
-                    }
-                } else if (false === (/^[a-zA-Z\-\.0-9_\+]{1,64}@[a-zA-Z\-\.0-9_\+]{3,100}$/.test(value))) {
-                    errors['email'] = 'error.email_invalid';
-                }
-            } else if (property === 'mobile') {
-                if (value.length === 0) {
-                    if (mandatoryPersonalData.includes(property)) {
-                        errors['mobile'] = 'error.mobile_empty';
-                    }
-                } else {
-                    let sanitizedValue = '';
-                    for(let x = 0; x < value.length; x++) {
-                        if (((value[x] >= '0') && (value[x] <= '9')) || (value[x] === '+')) {
-                            sanitizedValue = sanitizedValue + value[x];
-                        }
-                    }
-                    if  (false === (/^\+{0,1}([0-9]){9,14}$/.test(sanitizedValue))) {
-                        errors['mobile'] = 'error.mobile_invalid';
-                    }
-                }
-            }
-        }
-        setBookingData( { ...bookingData, step: 'step_personal_data', step_personal_data: { ...bookingData.step_personal_data, errors: errors } } );
+        setBookingData( { ...bookingData, step: 'step_personal_data', step_personal_data: customerDataAfterBlur(bookingData.step_personal_data, property, e, mandatoryPersonalData) } );
     }
 
     async function createBooking() {
@@ -1084,11 +1028,7 @@ export function BookingPageInternalApp (props) {
 
     function getSubmitBookingBtnStatus() {
         //take into consideration if name, email and mobile are mandatory
-        return ( (bookingData.step_personal_data.name.length > 0) || (! mandatoryPersonalData.includes('name')) ) &&
-                ((bookingData.step_personal_data.email.length > 0) || (! mandatoryPersonalData.includes('email')) ) &&
-                ((bookingData.step_personal_data.mobile.length > 0) || (! mandatoryPersonalData.includes('mobile')) ) &&
-                ((bookingData.step_personal_data.acceptTerms === true) &&
-                (Object.keys(bookingData.step_personal_data.errors).length === 0) && ! bookingStatus.submit );
+        return isCustomerDataComplete(bookingData.step_personal_data, mandatoryPersonalData) && ! bookingStatus.submit;
     }
 
     function selectedSlotCard() {

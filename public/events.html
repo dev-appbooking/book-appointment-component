@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>appBooking test event booking component</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.0/umd/react-dom.production.min.js"></script>
+  <link rel="preload" as="style" href="/css/style.css" /><link rel="stylesheet" href="/css/style.css" />
+  <script src="/js/appBookingEvents.js"> </script>
+
+  <style>
+        body {
+            font-family: "Roboto", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+        }
+        h1 {
+            font-size: 2em;
+        }
+        .bookingContainer {
+            margin: 24px auto;
+            width: 100%;
+            font-size: 16px;
+        }
+        @media only screen and (min-width: 992px) {
+            .bookingContainer {
+                width: 800px;
+            }
+        }
+        @media only screen and (min-width: 1200px) {
+            .bookingContainer {
+                width: 90%;
+                max-width: 1200px;
+            }
+        }
+  </style>
+</head>
+
+<body>
+    <h1> appBooking - event booking component (concerts, trainings)</h1>
+    <div id="booking" class="bookingContainer"></div>
+</body>
+<script>
+    // query params: integrationId, language, eventType (concert | training), skuid, event, apiBase, utm_*
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const initConfigs = {
+        integrationId: urlParams.get('integrationId'),
+        // the seating API is only on the local backend for now
+        appBookingApiBaseUrl: urlParams.get('apiBase') || "http://localhost:8000",
+        locale: urlParams.get('language') || urlParams.get('locale'),
+        eventType: urlParams.get('eventType'),
+        utm_params: {
+            utm_source: urlParams.get('utm_source'),
+            utm_medium: urlParams.get('utm_medium'),
+            utm_campaign: urlParams.get('utm_campaign'),
+        },
+        initialSelections: {
+            skuid: urlParams.get('skuid'),
+            event: urlParams.get('event'),
+        },
+        configs: {
+            step_personal_data: {
+                mandatory_data: ['name', 'mobile']
+            },
+            termsAndConditions: {
+                links: [
+                    { label_key: 'business.terms', link: 'https://appbooking.ro/termeni-si-conditii'},
+                    { label_key: 'business.privacy', link: 'https://appbooking.ro/politica-de-confidentialitate'}
+                ]
+            },
+            text: {
+                "ro": {
+                    "customer.acceptTerms": "Am citit si sunt de acord cu {0} precum si cu {1}",
+                    "business.terms": "Termenii si conditiile",
+                    "business.privacy": "Politica de confidentialitate",
+                }
+            }
+        }
+    };
+    const root = ReactDOM.createRoot(document.getElementById('booking'));
+    root.render(React.createElement(appBookingEvents.AppBookingEvents, initConfigs));
+</script>
+</html>

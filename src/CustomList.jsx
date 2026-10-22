@@ -4,14 +4,19 @@ import { useState } from 'react';
 /*
 A grid of selectable items. props.variant picks the look: 'tiles' for short names (categories, specialists),
 'cards' for the services.
+props.isItemDisabled(item) marks the items that are shown but can't be chosen.
 With props.maxVisible only the first items are shown, followed by a "show more" button labelled
 props.moreLabel(hiddenCount). The selected item is always shown.
 */
 export function CustomList(props) {
     const [ showAll, setShowAll ] = useState(false);
 
+    function isDisabled(item) {
+        return !!props.isItemDisabled && props.isItemDisabled(item);
+    }
+
     function onSelect(item, index) {
-        if (!props.onSelectItem) {
+        if (!props.onSelectItem || isDisabled(item)) {
             return;
         }
         props.onSelectItem(item, index)
@@ -30,9 +35,13 @@ export function CustomList(props) {
         if (isSelected) {
             classValue += " appBookingActiveListItem";
         }
+        const disabled = isDisabled(item);
+        if (disabled) {
+            classValue += " appBookingListItemDisabled";
+        }
         return (
             <div key={item.id !== undefined ? item.id : index} className={classValue}
-                 role="button" tabIndex={0} aria-pressed={isSelected}
+                 role="button" tabIndex={disabled ? -1 : 0} aria-pressed={isSelected} aria-disabled={disabled || undefined}
                  onClick={ () => { onSelect(item, index) } } onKeyDown={ (e) => { onKeyDown(e, item, index) } }>
                 <div className="appBookingListItemContent"> { props.itemContent(item, isSelected) } </div>
             </div>
