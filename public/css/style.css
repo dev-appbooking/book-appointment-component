@@ -1390,6 +1390,143 @@ overflow: hidden or auto they scroll along with the rest of the widget.
     height: 72px;
 }
 
+/* the floor map (venue.mapContent): every element with a data-seat-code gets appBookingDeskMapSeat plus its state */
+.appBookingDeskViewToggle {
+    display: flex;
+    gap: 6px;
+}
+
+.appBookingDeskMapContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.appBookingDeskMap {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    background-color: var(--appBookingSurface);
+    padding: 8px;
+    overflow: auto;
+}
+
+.appBookingDeskMap svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    margin: 0 auto;
+}
+
+/* a desk: its shapes (.desk-surface and .desk-chair in the map's markup, or any shape) and its .desk-label text,
+   in the widget's colours. Prefixed so they win over the map's own default desk styles (.deskmap .desk ...).
+   --appBookingDeskMapFontSize sets the size of the desk labels, in map units (it scales with the map). */
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke-width: 1.5px;
+    stroke-dasharray: none;
+    transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+/* centred on the text's own x / y: a map draws each desk's text with its anchor at the desk's centre */
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat text {
+    font-family: inherit;
+    font-size: var(--appBookingDeskMapFontSize, 24px);
+    font-weight: 600;
+    fill: var(--appBookingText);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    user-select: none;
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat:focus {
+    outline: none;
+}
+
+/* free: can be chosen */
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free {
+    cursor: pointer;
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingAccentLight);
+    stroke: var(--appBookingAccent);
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free .desk-chair {
+    fill: var(--appBookingSurface);
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline):hover,
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:hover :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline):focus-visible,
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:focus-visible :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke: var(--appBookingAccentDark);
+    stroke-width: 3px;
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:hover text,
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_free:focus-visible text {
+    fill: var(--appBookingAccentDark);
+}
+
+/* selected: the desk the customer chose (after hover, so it wins while hovered) */
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeatSelected:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeatSelected :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingAccent);
+    stroke: var(--appBookingAccentDark);
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeatSelected .desk-chair {
+    fill: var(--appBookingAccentLight);
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeatSelected text {
+    fill: #fff;
+}
+
+/* taken or closed: can't be chosen, no hover feedback */
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_taken,
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_closed {
+    cursor: not-allowed;
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_taken:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_taken :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_closed:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_closed :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingPanel);
+    stroke: var(--appBookingBorder);
+    stroke-width: 1px;
+    stroke-dasharray: 6 4;
+}
+
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_taken text,
+.appBookingWidget .appBookingDeskMap .appBookingDeskMapSeat.appBookingDeskMapSeat_closed text {
+    fill: var(--appBookingTextDisabled);
+}
+
+/* a code that isn't a desk of the layout */
+.appBookingDeskMapSeat_unknown {
+    opacity: 0.35;
+}
+
+.appBookingDeskMapDetails {
+    min-height: 1.4em;
+    font-size: 0.9em;
+}
+
+.appBookingDeskMapHint,
+.appBookingDeskMapMissing {
+    font-size: 0.85em;
+}
+
 .appBookingDeskUnavailable {
     display: flex;
     flex-direction: column;

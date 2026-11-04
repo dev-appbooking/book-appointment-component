@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { httpRequest } from '../HttpRequest';
 import { deskPrice, priceLabel, desksOfLayout, deskAttributesText } from './deskData.js';
+import { DeskMap, sanitizeDeskMap, seatCodesOfMap } from './DeskMap.jsx';
 
 // the layouts already loaded, by venue and layout version: a layout only changes with its version
 const layoutCache = {};
@@ -18,7 +19,8 @@ function loadLayout(apiBase, integrationId, venue) {
 }
 
 /*
-The desks of the floor, grouped by area. A desk that is taken or closed on at least one of the chosen days
+The desks of the floor, on the venue's map (layout.venue.mapContent) when it has one, or grouped by area as a
+list. With a map the customer can switch between the map and the list. A desk that is taken or closed on at least one of the chosen days
 can't be chosen. Choosing a desk calls onSelectDesk({ seat, area }).
 props: apiBase, integrationId, option (the service and floor), starts (the UTC start of each chosen day),
 heldSeatCode (the desk this customer holds: it shows as taken in the availability, but is theirs),
@@ -27,7 +29,11 @@ selectedSeatCode, refreshKey, notice, ltext, rawTextByKey.
 export function ChooseDesk(props) {
     const option = props.option;
     const [ data, setData ] = useState({ status: 'loading', layout: null, taken: {} });
+    const [ view, setView ] = useState('map');
     const startsKey = (props.starts || []).join(',');
+    const mapContent = data.layout && data.layout.venue ? data.layout.venue.mapContent : null;
+    const cleanMap = useMemo( () => sanitizeDeskMap(mapContent), [mapContent]);
+    const mapCodes = useMemo( () => seatCodesOfMap(cleanMap), [cleanMap]);
 
     useEffect(() => {
         let active = true;
@@ -69,16 +75,33 @@ export function ChooseDesk(props) {
         }
     }
 
-    function deskButton(desk) {
+    function deskInfo(desk) {
         let { seat, area } = desk;
         let state = stateOf(seat);
-        let isSelected = !!props.selectedSeatCode && (props.selectedSeatCode === seat.code);
         let price = priceLabel(deskPrice(option, seat.priceCategory || area.priceCategory));
         let attributes = deskAttributesText(seat.attributes);
         let stateText = state === 'free' ? null : props.rawTextByKey('desk.seat.' + state);
+        let kindText = seat.kind === 'standing_desk' ? props.rawTextByKey('desk.seat.standing') : null;
+        return { state, price, attributes, stateText, kindText };
+    }
+
+    function deskLabel(desk) {
+        let { price, attributes, stateText, kindText } = deskInfo(desk);
+        return [ desk.seat.label || desk.seat.code, kindText, attributes.join(', '), price, stateText ].filter(Boolean).join(', ');
+    }
+
+    function deskDetails(desk) {
+        let { price, attributes, stateText, kindText } = deskInfo(desk);
+        return [ desk.seat.label || desk.seat.code, desk.area.name || desk.area.code, kindText, attributes.join(' · '), stateText || price ]
+            .filter(Boolean).join(' · ');
+    }
+
+    function deskButton(desk) {
+        let { seat } = desk;
+        let { state, price, attributes, stateText } = deskInfo(desk);
+        let isSelected = !!props.selectedSeatCode && (props.selectedSeatCode === seat.code);
         let classValue = "appBookingDeskButton appBookingDeskButton_" + state + (isSelected ? " appBookingDeskButtonSelected" : "");
-        let label = [ seat.label || seat.code, seat.kind === 'standing_desk' ? props.rawTextByKey('desk.seat.standing') : null,
-                      attributes.join(', '), price, stateText ].filter(Boolean).join(', ');
+        let label = deskLabel(desk);
         return (
             <button key={seat.code} type="button" className={classValue} data-seat-code={seat.code} disabled={state !== 'free'}
                     aria-pressed={isSelected} aria-label={label} onClick={ () => select(desk) }>
@@ -107,9 +130,11 @@ export function ChooseDesk(props) {
         }
         let desks = desksOfLayout(data.layout);
         let freeDesks = desks.filter( desk => stateOf(desk.seat) === 'free' );
-        let areas = ((data.layout && data.layout.areas) || []).filter( area => (area.seats || []).length > 0 );
+        let hasMap = !!cleanMap;
+        let showMap = hasMap && (view === 'map');
         return (
             <div className="appBookingDeskAreas" aria-busy={data.status === 'loading'}>
+                { hasMap && viewToggle() }
                 { freeDesks.length === 0
                     ? <div className="appBookingWarningText"> { props.rawTextByKey('desk.seat.noneFree') } </div>
                     : <div className="appBookingDeskAny">
@@ -117,6 +142,45 @@ export function ChooseDesk(props) {
                               { props.rawTextByKey('desk.seat.any') }
                           </button>
                       </div> }
+                { showMap ? mapContentOf(desks) : listContent() }
+            </div>
+        );
+    }
+
+    function viewToggle() {
+        return (
+            <div className="appBookingDeskViewToggle" role="group" aria-label={props.rawTextByKey('desk.view.label')}>
+                { [ 'map', 'list' ].map( item => (
+                    <button key={item} type="button" aria-pressed={view === item}
+                            className={"appBookingChip appBookingDeskViewButton" + (view === item ? " appBookingChipSelected" : "")}
+                            onClick={ () => setView(item) }>
+                        { props.rawTextByKey('desk.view.' + item) }
+                    </button>
+                )) }
+            </div>
+        );
+    }
+
+    function mapContentOf(desks) {
+        let missing = desks.filter( desk => !mapCodes[desk.seat.code] ).length;
+        return (<>
+            <DeskMap cleanMap={cleanMap} desks={desks} stateOf={stateOf} selectedSeatCode={props.selectedSeatCode}
+                     labelOf={deskLabel} detailsOf={deskDetails} disabled={data.status === 'loading'}
+                     hint={props.rawTextByKey('desk.map.hint')} onSelectDesk={select} />
+            { missing > 0 && (
+                <div className="appBookingDeskMapMissing appBookingTextNotImportant">
+                    { text('desk.map.missing', missing) }
+                    { ' ' }
+                    <button type="button" className="appBookingLinkButton" onClick={ () => setView('list') }>
+                        { props.rawTextByKey('desk.view.showList') }
+                    </button>
+                </div> ) }
+        </>);
+    }
+
+    function listContent() {
+        let areas = ((data.layout && data.layout.areas) || []).filter( area => (area.seats || []).length > 0 );
+        return (<>
                 { areas.map( area => (
                     <div key={area.code} className="appBookingDeskArea" data-area-code={area.code}>
                         <div className="appBookingDeskAreaHeader">
@@ -131,8 +195,7 @@ export function ChooseDesk(props) {
                         </div>
                     </div>
                 )) }
-            </div>
-        );
+        </>);
     }
 
     return (
