@@ -1711,6 +1711,254 @@ overflow: hidden or auto they scroll along with the rest of the widget.
     cursor: default;
 }
 
+/* the venue map of an event (venue.mapContent): every element with a data-seat-code gets appBookingEventMapSeat
+   plus its state, every element with a data-area-code gets appBookingEventMapArea plus its state and kind.
+   --appBookingEventMapFontSize sets the size of the seat labels, in map units (it scales with the map). */
+.appBookingEventViewToggle {
+    display: flex;
+    gap: 6px;
+}
+
+.appBookingEventMapContainer,
+.appBookingEventMapStanding {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.appBookingEventMap {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    background-color: var(--appBookingSurface);
+    padding: 8px;
+    overflow: auto;
+}
+
+.appBookingEventMap svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    margin: 0 auto;
+}
+
+/* the map's own <style> is dropped when it is sanitised, so a shape with no fill attribute would be black:
+   it inherits these instead (a fill attribute in the map still wins) */
+.appBookingWidget :is(.appBookingDeskMap, .appBookingEventMap) svg {
+    fill: var(--appBookingPanel);
+    stroke: var(--appBookingBorder);
+}
+
+.appBookingWidget :is(.appBookingDeskMap, .appBookingEventMap) svg text:not([fill]) {
+    fill: var(--appBookingTextMuted);
+    stroke: none;
+}
+
+/* a standing area's label, centred on its own x / y like a seat's (the map's <style> that did it is dropped).
+   A text-anchor or dominant-baseline attribute in the map still wins. */
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing text {
+    font-family: inherit;
+    font-weight: 600;
+    fill: var(--appBookingText);
+    pointer-events: none;
+    user-select: none;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing text:not([text-anchor]) {
+    text-anchor: middle;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing text:not([dominant-baseline]) {
+    dominant-baseline: central;
+}
+
+/* a seated area: a light tint of its colour (area.color), behind its seats */
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_seated:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_seated > :is(rect, circle, ellipse, path, polygon, polyline):not([data-seat-code]),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_unknown:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_unknown > :is(rect, circle, ellipse, path, polygon, polyline):not([data-seat-code]) {
+    fill: var(--appBookingMapAreaColor, var(--appBookingPanel));
+    fill-opacity: 0.12;
+    stroke: var(--appBookingMapAreaColor, var(--appBookingBorder));
+    stroke-width: 1px;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke-width: 1.5px;
+    stroke-dasharray: none;
+    transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+/* centred on the text's own x / y: a map draws each seat's text with its anchor at the seat's centre */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat text {
+    font-family: inherit;
+    font-size: var(--appBookingEventMapFontSize, 12px);
+    font-weight: 600;
+    fill: var(--appBookingText);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    user-select: none;
+}
+
+.appBookingWidget .appBookingEventMap :is(.appBookingEventMapSeat, .appBookingEventMapArea):focus {
+    outline: none;
+}
+
+/* free: can be chosen */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free {
+    cursor: pointer;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingEventMapLegendSample_free {
+    fill: var(--appBookingAccentLight);
+    stroke: var(--appBookingAccent);
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline):hover,
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free:hover :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free:is(rect, circle, ellipse, path, polygon, polyline):focus-visible,
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free:focus-visible :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke: var(--appBookingAccentDark);
+    stroke-width: 3px;
+}
+
+/* free, but the most seats of a booking are already chosen */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_free[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+/* the kinds marked on the map, besides regular seats */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_wheelchair:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_wheelchair :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_companion:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_companion :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke: var(--appBookingAccentDark);
+    stroke-dasharray: 4 2;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_restricted_view:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_kind_restricted_view :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke-dasharray: 1 2;
+}
+
+/* selected: a seat the customer chose (after hover, so it wins while hovered); clicking it again removes it */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeatSelected {
+    cursor: pointer;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeatSelected:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeatSelected :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingEventMapLegendSample_selected {
+    fill: var(--appBookingAccent);
+    stroke: var(--appBookingAccentDark);
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeatSelected text {
+    fill: #fff;
+}
+
+/* taken: held, sold or blocked */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_taken {
+    cursor: not-allowed;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_taken:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_taken :is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingEventMapLegendSample_taken {
+    fill: var(--appBookingPanel);
+    stroke: var(--appBookingBorder);
+    stroke-width: 1px;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_taken text {
+    fill: var(--appBookingTextDisabled);
+}
+
+/* a standing area: chosen on the map, then its number of places under it */
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing[role="button"] {
+    cursor: pointer;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_free:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_free > :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingMapAreaColor, var(--appBookingAccentLight));
+    fill-opacity: 0.25;
+    stroke: var(--appBookingMapAreaColor, var(--appBookingAccent));
+    transition: stroke-width 0.15s ease;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_free:is(:hover, :focus-visible):is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_free:is(:hover, :focus-visible) > :is(rect, circle, ellipse, path, polygon, polyline) {
+    stroke: var(--appBookingAccentDark);
+    stroke-width: 3px;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_full:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing.appBookingEventMapArea_full > :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingPanel);
+    stroke: var(--appBookingBorder);
+}
+
+/* a code that isn't a seat or an area of the layout */
+.appBookingEventMapSeat_unknown,
+.appBookingEventMapArea_unknown {
+    opacity: 0.35;
+}
+
+.appBookingEventMapLegendSample {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1.5px solid var(--appBookingAccent);
+    background-color: var(--appBookingAccentLight);
+}
+
+.appBookingEventMapLegendSample_selected {
+    background-color: var(--appBookingAccent);
+    border-color: var(--appBookingAccentDark);
+}
+
+.appBookingEventMapLegendSample_taken {
+    background-color: var(--appBookingPanel);
+    border-color: var(--appBookingBorder);
+}
+
+.appBookingEventMapLegendSample_kind_wheelchair,
+.appBookingEventMapLegendSample_kind_companion {
+    border-style: dashed;
+    border-color: var(--appBookingAccentDark);
+}
+
+.appBookingEventMapLegendSample_kind_restricted_view {
+    border-style: dotted;
+}
+
+.appBookingEventMapDetails {
+    min-height: 1.4em;
+    font-size: 0.9em;
+}
+
+.appBookingEventMapHint,
+.appBookingEventMapMissing {
+    font-size: 0.85em;
+}
+
+.appBookingEventMapSelected {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
 .appBookingSeatStanding,
 .appBookingPlaces {
     display: flex;
