@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { httpRequest } from '../HttpRequest';
-import { deskPrice, priceLabel, desksOfLayout, deskAttributesText } from './deskData.js';
+import { deskPrice, priceLabel, desksOfLayout, deskAttributesText, isDeskOfOption } from './deskData.js';
 import { DeskMap, sanitizeDeskMap, seatCodesOfMap } from './DeskMap.jsx';
 
 // the layouts already loaded, by venue and layout version: a layout only changes with its version
@@ -62,9 +62,13 @@ export function ChooseDesk(props) {
         return props.ltext.textValue(props.rawTextByKey(key), ...args);
     }
 
-    function stateOf(seat) {
+    function stateOf(seat, area) {
         if (props.heldSeatCode && (seat.code === props.heldSeatCode)) {
             return 'free';
+        }
+        // the service books only the desks of its priceCategories; seating/availability/seats lists the others as closed too
+        if (area && !isDeskOfOption(option, seat, area)) {
+            return 'closed';
         }
         return data.taken[seat.code] || 'free';
     }
@@ -77,8 +81,8 @@ export function ChooseDesk(props) {
 
     function deskInfo(desk) {
         let { seat, area } = desk;
-        let state = stateOf(seat);
-        let price = priceLabel(deskPrice(option, seat.priceCategory || area.priceCategory));
+        let state = stateOf(seat, area);
+        let price = priceLabel(deskPrice(option));
         let attributes = deskAttributesText(seat.attributes);
         let stateText = state === 'free' ? null : props.rawTextByKey('desk.seat.' + state);
         let kindText = seat.kind === 'standing_desk' ? props.rawTextByKey('desk.seat.standing') : null;
@@ -129,7 +133,7 @@ export function ChooseDesk(props) {
             return ( <div className="appBookingErrorText appBookingMessage"> { props.rawTextByKey('error.generic') } </div> );
         }
         let desks = desksOfLayout(data.layout);
-        let freeDesks = desks.filter( desk => stateOf(desk.seat) === 'free' );
+        let freeDesks = desks.filter( desk => stateOf(desk.seat, desk.area) === 'free' );
         let hasMap = !!cleanMap;
         let showMap = hasMap && (view === 'map');
         return (
@@ -164,7 +168,7 @@ export function ChooseDesk(props) {
     function mapContentOf(desks) {
         let missing = desks.filter( desk => !mapCodes[desk.seat.code] ).length;
         return (<>
-            <DeskMap cleanMap={cleanMap} desks={desks} stateOf={stateOf} selectedSeatCode={props.selectedSeatCode}
+            <DeskMap cleanMap={cleanMap} desks={desks} stateOf={ (seat, area) => stateOf(seat, area) } selectedSeatCode={props.selectedSeatCode}
                      labelOf={deskLabel} detailsOf={deskDetails} disabled={data.status === 'loading'}
                      hint={props.rawTextByKey('desk.map.hint')} onSelectDesk={select} />
             { missing > 0 && (
@@ -179,7 +183,10 @@ export function ChooseDesk(props) {
     }
 
     function listContent() {
-        let areas = ((data.layout && data.layout.areas) || []).filter( area => (area.seats || []).length > 0 );
+        // the list leaves out the desks this service doesn't book (the map shows them as closed)
+        let areas = ((data.layout && data.layout.areas) || [])
+            .map( area => ({ ...area, seats: (area.seats || []).filter( seat => isDeskOfOption(option, seat, area) ) }) )
+            .filter( area => area.seats.length > 0 );
         return (<>
                 { areas.map( area => (
                     <div key={area.code} className="appBookingDeskArea" data-area-code={area.code}>
@@ -187,7 +194,7 @@ export function ChooseDesk(props) {
                             { area.color && <span className="appBookingDeskAreaColor" style={{ backgroundColor: area.color }} aria-hidden="true"></span> }
                             <span className="appBookingDeskAreaName"> { area.name || area.code } </span>
                             <span className="appBookingDeskAreaFree appBookingTextNotImportant">
-                                { text('desk.times.free', area.seats.filter( seat => stateOf(seat) === 'free' ).length) }
+                                { text('desk.times.free', area.seats.filter( seat => stateOf(seat, area) === 'free' ).length) }
                             </span>
                         </div>
                         <div className="appBookingDeskGrid">

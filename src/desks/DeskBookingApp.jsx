@@ -14,7 +14,7 @@ import { configurableText, ClockIcon, LocationIcon, XCircle, CheckCircleIcon } f
 import { formatLocalizedDayMonth, formatLocalizedLongDate } from '../utils/formatters';
 import { emptyCustomerData, customerDataAfterChange, customerDataAfterBlur, isCustomerDataComplete } from '../utils/customerData.js';
 import { deskLocalizationTexts } from './deskTexts.js';
-import { deskOptionsFromCatalog, preselectDeskOption, deskPrice, lowestDeskPrice, hasSeveralPrices, priceLabel,
+import { deskOptionsFromCatalog, preselectDeskOption, deskPrice, priceLabel,
          dateOfDayKey, dayKeyIn, addMinutesToTime, timeIn } from './deskData.js';
 import { ChooseDeskDays } from './ChooseDeskDays.jsx';
 import { ChooseDesk } from './ChooseDesk.jsx';
@@ -317,8 +317,7 @@ export function DeskBookingApp(props) {
     }
 
     function optionPriceText(option) {
-        let lowest = lowestDeskPrice(option);
-        return text(hasSeveralPrices(option) ? 'desk.service.fromPerDay' : 'desk.service.perDay', priceLabel(lowest));
+        return text('desk.service.perDay', priceLabel(deskPrice(option)));
     }
 
     function reservationCountdown() {
@@ -454,8 +453,8 @@ export function DeskBookingApp(props) {
             </>);
     }
 
-    function deskPriceText(option, desk) {
-        return priceLabel(deskPrice(option, desk.seat.priceCategory || desk.area.priceCategory));
+    function deskPriceText(option) {
+        return priceLabel(deskPrice(option));
     }
 
     function totalText() {
@@ -491,7 +490,7 @@ export function DeskBookingApp(props) {
                 </div>
                 <div className="appBookingServiceAttr">
                     <div className="appBookingServiceAttrContent">
-                        { text('desk.service.perDay', deskPriceText(option, desk)) }{ totalText() ? ' · ' + getRawTextByKey('desk.summary.total') + ': ' + totalText() : '' }
+                        { text('desk.service.perDay', deskPriceText(option)) }{ totalText() ? ' · ' + getRawTextByKey('desk.summary.total') + ': ' + totalText() : '' }
                     </div>
                 </div>
                 { reservationCountdown() }

@@ -1882,6 +1882,24 @@ overflow: hidden or auto they scroll along with the rest of the widget.
     fill: var(--appBookingTextDisabled);
 }
 
+/* closed: no ticket type on sale sells the seat (ABB-162) */
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_closed {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_closed:is(rect, circle, ellipse, path, polygon, polyline),
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_closed :is(rect, circle, ellipse, path, polygon, polyline) {
+    fill: var(--appBookingPanel);
+    stroke: var(--appBookingBorder);
+    stroke-width: 1px;
+    stroke-dasharray: 2 2;
+}
+
+.appBookingWidget .appBookingEventMap .appBookingEventMapSeat.appBookingEventMapSeat_closed text {
+    fill: var(--appBookingTextDisabled);
+}
+
 /* a standing area: chosen on the map, then its number of places under it */
 .appBookingWidget .appBookingEventMap .appBookingEventMapArea_standing[role="button"] {
     cursor: pointer;
@@ -1957,6 +1975,88 @@ overflow: hidden or auto they scroll along with the rest of the widget.
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+}
+
+/* the ticket types of an event (ABB-162), above the seats */
+.appBookingTicketTypes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.appBookingTicketTypesTitle {
+    font-weight: 500;
+}
+
+.appBookingTicketTypesList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.appBookingTicketType {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+}
+
+.appBookingTicketTypeColors {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.appBookingTicketTypeName {
+    font-weight: 500;
+}
+
+.appBookingTicketTypeInfo {
+    font-size: 0.85em;
+}
+
+.appBookingTicketTypeUnavailable .appBookingTicketTypeName,
+.appBookingTicketTypeUnavailable .appBookingTicketTypePrice {
+    color: var(--appBookingTextDisabled);
+}
+
+/* the chosen seats, each with its ticket type */
+.appBookingEventSelectedSeats {
+    flex-direction: column;
+}
+
+.appBookingEventSelectedSeat {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.appBookingEventSelectedSeatLabel {
+    font-weight: 500;
+}
+
+.appBookingEventSelectedSeatType {
+    font-size: 0.85em;
+}
+
+.appBookingEventTicketTypeSelect {
+    max-width: 100%;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 0.9em;
+    border: 1px solid var(--appBookingBorder);
+    border-radius: 6px;
+    background-color: var(--appBookingSurface);
+    color: var(--appBookingText);
+}
+
+.appBookingSeatStandingTypeInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .appBookingSeatStanding,

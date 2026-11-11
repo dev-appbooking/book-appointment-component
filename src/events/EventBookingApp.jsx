@@ -14,8 +14,9 @@ import { configurableText, ClockIcon, LocationIcon, XCircle, CheckCircleIcon } f
 import { formatLocalizedLongDate } from '../utils/formatters';
 import { emptyCustomerData, customerDataAfterChange, customerDataAfterBlur, isCustomerDataComplete } from '../utils/customerData.js';
 import { eventLocalizationTexts } from './eventTexts.js';
-import { eventOptionsFromCatalog, preselectEventOption, hasNoVenue, unitPrice, priceLabel, sessionsOf, eventDayKeys,
-         localDateOf, localTimeOf, selectedUnits, reservationItems, selectionWithoutConflicts, groupSeatItems } from './eventData.js';
+import { eventOptionsFromCatalog, preselectEventOption, isOptionOnSale, hasNoVenue, priceLabel, lowestPrice, sessionsOf, eventDayKeys,
+         localDateOf, localTimeOf, selectedUnits, reservationItems, selectionWithoutConflicts, groupSeatItems,
+         emptySelection, ticketTypeById, quotaLeft } from './eventData.js';
 import { ChooseSeats } from './ChooseSeats.jsx';
 import { ChoosePlaces } from './ChoosePlaces.jsx';
 
@@ -26,11 +27,6 @@ const stepGroups = {
     step_personal_data: 'details',
     step_confirmation: 'confirmation'
 };
-
-// what is chosen on the tickets step; see ChooseSeats and ChoosePlaces
-function emptySelection(option) {
-    return { seats: {}, standing: {}, quantity: (option && hasNoVenue(option.event)) ? 1 : 0 };
-}
 
 function itemsKey(items) {
     return JSON.stringify(items);
@@ -100,7 +96,8 @@ export function EventBookingApp(props) {
             try {
                 setCatalog(prev => ({ ...prev, status: 'fetching' }));
                 let response = await httpRequest('GET', seatingUrl + 'catalog');
-                let options = eventOptionsFromCatalog(response.skus, props.eventType);
+                // ABB-162: the events are listed on their own, each with its ticket types; skus are desk services only
+                let options = eventOptionsFromCatalog(response.events, props.eventType);
                 let inScope = startBooking(options, true);
                 setCatalog({ status: 'success', options: inScope });
             } catch (e) {
@@ -219,7 +216,7 @@ export function EventBookingApp(props) {
     }
 
     function onSelectOption(option) {
-        if (!option.event.onSale) {
+        if (!isOptionOnSale(option)) {
             return;
         }
         if (option.id !== optionId) {
@@ -241,6 +238,15 @@ export function EventBookingApp(props) {
     function noticeFor409(newSelection, conflicts) {
         if ((conflicts || []).some( conflict => conflict.seatCode )) {
             return { key: 'events.conflict.seats' };
+        }
+        // a ticket type with less of its quota left than asked
+        let typeConflict = (conflicts || []).find( conflict => conflict.serviceSkuId );
+        if (typeConflict) {
+            let type = ticketTypeById(selectedOption(), typeConflict.serviceSkuId);
+            let name = type ? type.sku.name : '';
+            let available = typeConflict.available || 0;
+            return available > 0 ? { key: 'events.conflict.ticketType', args: [ name, available ] }
+                                 : { key: 'events.conflict.ticketType.soldOut', args: [ name ] };
         }
         let available = (conflicts || []).map( conflict => conflict.available ).find( value => (value !== undefined) && (value !== null) );
         if ((available === undefined) || (selectedUnits(newSelection) === 0)) {
@@ -385,34 +391,83 @@ export function EventBookingApp(props) {
         return [ event.venueName, location.name, location.city ].filter(Boolean).join(', ');
     }
 
+    /*
+    The price of an event: the lowest price of its ticket types ("from" when they don't all cost the same).
+    The catalog's fromPrice only counts the types selling a category in use at the venue, so it is used when
+    every type of the event is offered; a deep link to one ticket type shows that type's price.
+    */
     function eventPriceText(option) {
         let event = option.event;
-        if (hasNoVenue(event)) {
-            return text('events.event.perPlace', priceLabel(event.fromPrice || unitPrice(option, null)));
+        let lowest = lowestPrice(option.ticketTypes);
+        let all = option.ticketTypes.length === (event.ticketTypes || []).length;
+        let price = (all && event.fromPrice) ? { ...event.fromPrice, several: !!(lowest && lowest.several) } : lowest;
+        if (!price) {
+            return null;
         }
-        let prices = Object.values(event.pricing || {}).map( p => parseFloat(p.price) );
-        let several = new Set(prices.concat([ parseFloat((event.fromPrice || {}).price) ]).filter( p => !isNaN(p) )).size > 1;
-        let price = priceLabel(event.fromPrice || unitPrice(option, null));
-        return several ? text('events.event.from', price) : price;
+        if (hasNoVenue(event)) {
+            return text(price.several ? 'events.event.from' : 'events.event.perPlace', priceLabel(price));
+        }
+        return price.several ? text('events.event.from', priceLabel(price)) : priceLabel(price);
+    }
+
+    function salesStartText(event, dateTime) {
+        return text('events.event.salesStart', longDate(event, dateTime) + ', ' + localTimeOf(event, dateTime));
+    }
+
+    function isFuture(dateTime) {
+        return !!dateTime && (new Date(dateTime).getTime() > Date.now());
+    }
+
+    function isPast(dateTime) {
+        return !!dateTime && (new Date(dateTime).getTime() <= Date.now());
     }
 
     // why an event can't be booked, or null when it is on sale
-    function notOnSaleText(event) {
-        if (event.onSale) {
+    function notOnSaleText(option) {
+        let event = option.event;
+        if (isOptionOnSale(option)) {
             return null;
         }
         if (event.status === 'sold_out') {
             return kindRaw('events.event.soldOut');
         }
-        let now = Date.now();
-        if (event.salesStart && (new Date(event.salesStart).getTime() > now)) {
-            return text('events.event.salesStart', longDate(event, event.salesStart) + ', ' + localTimeOf(event, event.salesStart));
+        if (isFuture(event.salesStart)) {
+            return salesStartText(event, event.salesStart);
         }
-        if (event.salesEnd && (new Date(event.salesEnd).getTime() <= now)) {
+        if (isPast(event.salesEnd)) {
             return getRawTextByKey('events.event.salesEnded');
         }
-        // on sale but every place is taken
+        // the event is on sale, but none of its ticket types: the soonest type to go on sale, else sold out or ended
+        let types = option.ticketTypes;
+        let upcoming = types.filter( type => isFuture(type.salesStart) )
+                            .sort( (a, b) => new Date(a.salesStart).getTime() - new Date(b.salesStart).getTime() );
+        if (upcoming.length > 0) {
+            return salesStartText(event, upcoming[0].salesStart);
+        }
+        if ((types.length > 0) && types.every( type => isPast(type.salesEnd) )) {
+            return getRawTextByKey('events.event.salesEnded');
+        }
+        // on sale but every place, or every ticket type's quota, is taken
         return kindRaw('events.event.soldOut');
+    }
+
+    // why a ticket type can't be bought now, or null
+    function ticketTypeStatus(type, liveTypes) {
+        let event = selectedOption() ? selectedOption().event : null;
+        let left = quotaLeft(type, liveTypes);
+        if (left === 0) {
+            return getRawTextByKey('events.ticketType.soldOut');
+        }
+        if (type.onSale) {
+            return null;
+        }
+        if (event && isFuture(type.salesStart)) {
+            return salesStartText(event, type.salesStart);
+        }
+        if (isPast(type.salesEnd)) {
+            return getRawTextByKey('events.ticketType.salesEnded');
+        }
+        return getRawTextByKey('events.ticketType.notOnSale');
     }
 
     function unitsText(units) {
@@ -482,7 +537,7 @@ export function EventBookingApp(props) {
                         <div className="appBookingServiceAttrContent"> { where } </div>
                     </div>
                 ) }
-                { withPrice && (
+                { (withPrice && eventPriceText(option)) && (
                     <div className="appBookingServiceAttr">
                         <div className="appBookingServiceAttrContent"> { eventPriceText(option) } </div>
                     </div>
@@ -493,14 +548,13 @@ export function EventBookingApp(props) {
 
     function optionItemContent(option) {
         let event = option.event;
-        let unavailable = notOnSaleText(event);
+        let unavailable = notOnSaleText(option);
         return (
             <div className="appBookingServiceContainer appBookingEventOption">
                 <div className="appBookingServiceHeader">
                     <span className="appBookingEventName"> { event.name } </span>
                     { unavailable && <span className="appBookingEventBadge"> { unavailable } </span> }
                 </div>
-                { (option.sku.name && (option.sku.name !== event.name)) && <div className="appBookingTextNotImportant"> { option.sku.name } </div> }
                 { eventMeta(option, true) }
             </div>
         );
@@ -510,7 +564,7 @@ export function EventBookingApp(props) {
         return (<>
                 <div className="appBookingStepTitle"> { stepTitle('events.step.event') } </div>
                 <CustomList variant="cards" items={catalog.options} onSelectItem={onSelectOption}
-                            isItemDisabled={ (option) => !option.event.onSale }
+                            isItemDisabled={ (option) => !isOptionOnSale(option) }
                             selectedId={optionId} itemContent={optionItemContent} />
             </>);
     }
@@ -538,7 +592,8 @@ export function EventBookingApp(props) {
             return null;
         }
         let common = { apiBase: apiBase, integrationId: integrationId, option: option, selection: selection,
-                       onChangeSelection: onChangeSelection, refreshKey: refreshKey, notice: noticeText(),
+                       onChangeSelection: onChangeSelection, ticketTypeStatus: ticketTypeStatus,
+                       refreshKey: refreshKey, notice: noticeText(),
                        ltext: ltext, rawTextByKey: getRawTextByKey };
         return (<>
                 { eventCard(option, hasNoVenue(option.event) ? eventSchedule(option.event) : null) }
@@ -549,14 +604,21 @@ export function EventBookingApp(props) {
             </>);
     }
 
-    // the held or booked units, one line per seat and one per standing area / event with no venue
+    /*
+    The held or booked units, one line per seat and one per standing area / event with no venue and ticket
+    type, e.g. "Zone A · Row 1 · Seat 1 · Adult · 120.00 LEI" or "Standing · Adult × 2 (60.00 LEI)".
+    */
     function unitLines(items) {
+        let option = selectedOption();
+        // the ticket type is named only when the event has several
+        let showType = !option || ((option.event.ticketTypes || []).length > 1);
         return groupSeatItems(items).map( line => {
             let price = line.price ? priceLabel({ price: line.price, currency: line.currency }) : '';
+            let label = [ line.label, showType ? line.ticketType : null ].filter(Boolean).join(' · ');
             if (line.isPlaces) {
-                return `${line.label} × ${line.count}` + (price ? ` (${price})` : '');
+                return `${label} × ${line.count}` + (price ? ` (${price})` : '');
             }
-            return line.label + (price ? ` · ${price}` : '');
+            return label + (price ? ` · ${price}` : '');
         });
     }
 
@@ -600,7 +662,7 @@ export function EventBookingApp(props) {
         let rows = [];
         if (option) {
             let event = option.event;
-            rows.push({ id: 'event', label: kindRaw('events.summary.event'), value: [ event.name, option.sku.name !== event.name ? option.sku.name : null ] });
+            rows.push({ id: 'event', label: kindRaw('events.summary.event'), value: event.name });
             rows.push({ id: 'date', label: getRawTextByKey('events.summary.date'), value: sessionsOf(event).map( session => sessionText(event, session) ) });
             if (eventWhereText(event)) {
                 rows.push({ id: 'venue', label: getRawTextByKey('service.address'), value: eventWhereText(event) });

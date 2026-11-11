@@ -11,8 +11,9 @@ const defaultHorizonDays = 60;
 
 /*
 The choices of the service step, one per desk service and floor:
-[ { id, sku, venue, seatPricing, horizonDays } ]. A desk service with no floor is in unavailableSkus.
-Only services of type DeskSku are kept.
+[ { id, sku, venue, priceCategories, horizonDays } ]. A desk service with no floor is in unavailableSkus.
+Only services of type DeskSku are kept. Since ABB-162 a desk service has one price (sku.price) and books only
+the desks of its priceCategories (empty: every desk); a desk category with another price is another service.
 */
 export function deskOptionsFromCatalog(catalogSkus) {
     let options = [];
@@ -27,7 +28,7 @@ export function deskOptionsFromCatalog(catalogSkus) {
             return;
         }
         venues.forEach( venue => {
-            options.push({ id: item.sku.id + ':' + venue.id, sku: item.sku, venue: venue, seatPricing: item.seatPricing || {},
+            options.push({ id: item.sku.id + ':' + venue.id, sku: item.sku, venue: venue, priceCategories: item.priceCategories || [],
                            horizonDays: item.bookingHorizonDays || defaultHorizonDays });
         });
     });
@@ -57,31 +58,19 @@ export function preselectDeskOption(options, skuidParam, venueIdParam) {
     return { options: inScope, option };
 }
 
-// the price of one day at a desk of the price category: { price, currency }
-export function deskPrice(option, priceCategory) {
-    let categoryPrice = priceCategory && option.seatPricing ? option.seatPricing[priceCategory] : null;
-    if (categoryPrice) {
-        return categoryPrice;
-    }
+// the price of one day at a desk of the option: the service's price, the same for every desk it books
+export function deskPrice(option) {
     return { price: option.sku.price, currency: option.sku.currency };
 }
 
-// the lowest price of a day at a desk of this option
-export function lowestDeskPrice(option) {
-    let prices = [ deskPrice(option, null) ].concat(Object.values(option.seatPricing || {}));
-    return prices.filter( p => p && (p.price !== undefined) && (p.price !== null) )
-                 .reduce( (lowest, p) => (!lowest || (parseFloat(p.price) < parseFloat(lowest.price))) ? p : lowest, null );
-}
-
-// true when the desk categories cost more than one price
-export function hasSeveralPrices(option) {
-    let prices = {};
-    [ deskPrice(option, null) ].concat(Object.values(option.seatPricing || {})).forEach( p => {
-        if (p && (p.price !== undefined) && (p.price !== null)) {
-            prices[parseFloat(p.price) + ' ' + p.currency] = true;
-        }
-    });
-    return Object.keys(prices).length > 1;
+// the desk can be booked with the option's service: its category is one of the service's priceCategories
+export function isDeskOfOption(option, seat, area) {
+    let categories = option.priceCategories || [];
+    if (categories.length === 0) {
+        return true;
+    }
+    let category = (seat && seat.priceCategory) || (area && area.priceCategory) || null;
+    return !!category && categories.includes(category);
 }
 
 export function priceLabel(price) {
